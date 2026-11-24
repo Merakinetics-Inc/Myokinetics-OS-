@@ -95,7 +95,7 @@
 
   /* ── capacity model from every input ─────────────────────────────── */
   const e1rm = (w, r) => (r > 0 ? w * (1 + r / 30) : 0);
-  const mScore = (s, id) => { const m = s.markers.find((x) => x.id === id); return m ? markerEval(m).score / 100 : 0.75; };
+  const mScore = (s, id) => { const m = s.markers.find((x) => x.id === id), sc = m ? markerEval(m).score : null; return sc == null ? 0.75 : sc / 100; };
   function capacities(s, sc) {
     const A = ensure(s), p = s.profile, vt = s.vitals, bwLb = p.weightKg * 2.2046, bmi = p.weightKg / Math.pow(p.heightCm / 100, 2);
     const ex = s.training.session.exercises;
@@ -109,12 +109,12 @@
     const c = {
       strength: clamp((pressE / bwLb) / 0.9, 0, 1) * 0.75 + mScore(s, 'tt') * 0.25,
       aerobic: clamp((72 - vt.rhr) / 30, 0, 1) * 0.45 + clamp((vt.hrv - 25) / 75, 0, 1) * 0.35 + (amAvg != null ? clamp((5 - amAvg) / 4, 0, 1) : 0.5) * 0.2,
-      anaerobic: clamp(sc.readiness / 100, 0, 1) * 0.5 + mScore(s, 'hgb') * 0.25 + mScore(s, 'mg') * 0.25,
+      anaerobic: clamp((sc.readiness ?? 70) / 100, 0, 1) * 0.5 + mScore(s, 'hgb') * 0.25 + mScore(s, 'mg') * 0.25,
       hypertrophy: (taper ? clamp((taper - 1.15) / 0.65, 0, 1) : 0.55) * 0.6 + clamp(sc.parts.training / 100, 0, 1) * 0.4,
       mobility: (postureGood != null ? postureGood : 0.62) * 0.7 + clamp(sc.parts.life / 100, 0, 1) * 0.3,
       relative: 0
     };
-    c.power = c.strength * 0.55 + clamp(sc.readiness / 100, 0, 1) * 0.25 + mScore(s, 'ck') * 0.2;
+    c.power = c.strength * 0.55 + clamp((sc.readiness ?? 70) / 100, 0, 1) * 0.25 + mScore(s, 'ck') * 0.2;
     c.relative = c.strength * 0.55 + clamp(1 - (bmi - 20) / 12, 0, 1) * 0.45;
     // genetics shift the estimate a little; measured data dominates
     GENES.forEach((g) => { const n = A.dna[g.id]; if (n == null) return; Object.entries(g.fx[n] || {}).forEach(([k, v]) => { c[k] = (c[k] || 0) + v; }); });
@@ -161,7 +161,7 @@
     const caf = gene.find((x) => x.gene === 'CYP1A2'); if (caf) stack.push(caf.tip);
     ['COL5A1', 'MTHFR', 'GC'].forEach((n) => { const x = gene.find((y) => y.gene === n); if (x && !stack.some((t) => t.startsWith(x.tip.slice(0, 12)))) stack.push(x.tip); });
     const sc2 = sc.markers.filter((x) => x.e.status !== 'good' && ['ferr', 'vitd', 'o3', 'mg', 'tt', 'hgb'].includes(x.m.id)).map((x) => x.m.name);
-    const rec = [`Sleep ${s.vitals.sleepH < 8 ? '8+ h; you average ' + s.vitals.sleepH + ' h' : '8 h, holding'}`, `Train hard only when HRV is within 7% of your ${s.vitals.hrvBase} ms baseline; otherwise swap to zone 2`];
+    const rec = [`Sleep ${s.vitals.sleepH == null ? '8+ h a night (connect a ring or strap to track it)' : s.vitals.sleepH < 8 ? '8+ h; you average ' + s.vitals.sleepH + ' h' : '8 h, holding'}`, `Train hard only when HRV is within 7% of your ${s.vitals.hrvBase == null ? 'own' : s.vitals.hrvBase + ' ms'} baseline; otherwise swap to zone 2`];
     gene.filter((x) => ['ACTN3', 'AMPD1', 'COMT', 'PPARGC1A', 'SLC16A1 (MCT1)'].includes(x.gene)).forEach((x) => rec.push(x.tip));
     return { a, arch, c, src, gaps, fit: fitOf(arch, c), nutrition: { kcal, protein, carbs: carbG, fat: fatG, note: fuelNote, maint: tg.kcal }, stack, rec, gene, labs: sc2 };
   }
@@ -192,7 +192,7 @@
         <section class="card">
           <div class="card-h"><h2>You vs. ${esc(a.name)}</h2><span class="legend"><i class="lg-you"></i>You <i class="lg-target"></i>Target</span></div>
           <div class="ath-split">${radar(P.c, a.demand)}<div class="gaps">${gapRows}</div></div>
-          <p class="fine">Built from: press e1RM ${P.src.pressE} lb at ${P.src.bwLb} lb bodyweight · RHR ${s.vitals.rhr} · HRV ${s.vitals.hrv} ms · BMI ${P.src.bmi}${P.src.taper ? ` · body-scan V-taper ${P.src.taper}×` : ' · no body scan yet'}${P.src.amAvg != null ? ` · breath ${P.src.amAvg.toFixed(1)}` : ''} · ${genesN} genes. Measured data outweighs DNA.</p>
+          <p class="fine">Built from: press e1RM ${P.src.pressE} lb at ${P.src.bwLb} lb bodyweight · RHR ${OS.dash(s.vitals.rhr)} · HRV ${OS.dash(s.vitals.hrv)} ms · BMI ${P.src.bmi}${P.src.taper ? ` · body-scan V-taper ${P.src.taper}×` : ' · no body scan yet'}${P.src.amAvg != null ? ` · breath ${P.src.amAvg.toFixed(1)}` : ''} · ${genesN} genes. Measured data outweighs DNA.</p>
         </section>
         <section class="card">
           <div class="card-h"><h2>12-week path</h2>${pill('peak', `${a.perWeek} sessions / week`)}</div>

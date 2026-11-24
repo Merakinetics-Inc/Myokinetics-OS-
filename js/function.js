@@ -39,7 +39,7 @@
     const mind = ci.length ? Math.round(ci.reduce((a, c) => a + ((c.mood + c.energy + c.focus + (6 - c.stress)) / 4 - 1) / 4 * 100, 0) / ci.length) : null;
     const habitPct = s.life.habits.length ? Math.round(s.life.habits.reduce((a, h) => a + k7.filter((d) => h.log[d]).length, 0) / (s.life.habits.length * 7) * 100) : null;
     const protoDays = k7.filter((d) => Object.values(s.protocolDone[d] || {}).filter(Boolean).length >= 2).length;
-    const sleepReg = clamp(100 - Math.abs(s.vitals.sleepH - 8) * 25, 0, 100);
+    const sleepReg = s.vitals.sleepH == null ? null : clamp(100 - Math.abs(s.vitals.sleepH - 8) * 25, 0, 100);
     const dims = {
       movement: avg([posture, ts('bal'), ts('tap'), clamp(s.vitals.steps / 100, 0, 100), clamp(trainDays / 8 * 100, 0, 100)]),
       cognition: avg([ts('rt'), ts('span')]),
@@ -103,7 +103,7 @@
           <div class="fn-heat">${k14.map((d) => { const c = F.checkins.find((x) => x.d === d); return `<i title="${d}${c ? ` · mood ${c.mood}/5` : ''}" class="${c ? 'm' + c.mood : ''}"></i>`; }).join('')}</div><p class="fine">Mood, last 14 days.</p></section>
         <section class="card"><div class="card-h"><h2>Behaviour</h2></div><ul class="sees">
           <li><span>Habits kept, 7 d</span><b class="num">${S.habitPct ?? '—'}%</b></li><li><span>Protocol days, 7 d</span><b class="num">${S.protoDays}/7</b></li>
-          <li><span>Sleep</span><b class="num">${s.vitals.sleepH} h</b></li><li><span>Readiness</span><b class="num">${sc.readiness}</b></li></ul>
+          <li><span>Sleep</span><b class="num">${OS.dash(s.vitals.sleepH)} h</b></li><li><span>Readiness</span><b class="num">${OS.dash(sc.readiness)}</b></li></ul>
           <a class="link small" href="#life">Habits and schedule in Life →</a></section>
       </div>
       <section class="card myo-plan"><div class="card-h"><h2>Myo's function analysis</h2><span class="chip chip-ai">AI coach</span></div>

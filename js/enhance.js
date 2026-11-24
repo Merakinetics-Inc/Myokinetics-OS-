@@ -97,7 +97,7 @@
       const suppRows = SUPPS.map((x) => {
         const g = GRADE[x.grade], fits = target && x.for.includes(target);
         let lab = '';
-        if (x.lab) { const m = mk(x.lab[0]); if (m) { const low = Number(m.value) < x.lab[2]; lab = low ? `<span class="tag tag-go">Your labs: yes · ${esc(m.name)} ${m.value}</span>` : `<span class="tag">Labs fine · ${esc(m.name)} ${m.value}</span>`; } }
+        if (x.lab) { const m = mk(x.lab[0]); if (m && OS.hasValue(m)) { const low = Number(m.value) < x.lab[2]; lab = low ? `<span class="tag tag-go">Your labs: yes · ${esc(m.name)} ${m.value}</span>` : `<span class="tag">Labs fine · ${esc(m.name)} ${m.value}</span>`; } }
         let gene = '';
         if (x.gene === 'cyp1a2' && dna.cyp1a2 != null) gene = `<span class="tag">${dna.cyp1a2 === 0 ? 'Fast caffeine metaboliser: full dose' : 'Slow metaboliser: 1–2 mg/kg, before noon'}</span>`;
         if (x.gene === 'gc' && dna.gc) gene = '<span class="tag">GC variant: aim for the top of the range</span>';
@@ -125,7 +125,7 @@
         if (k === 'rhr') return `<tr><td><b>Resting heart rate</b><span class="muted small block">from your wearable</span></td><td class="num">${s.vitals.rhr} bpm</td><td>${pill(s.vitals.rhr > 100 ? 'bad' : s.vitals.rhr > 80 ? 'warn' : 'good', s.vitals.rhr > 100 ? 'Act this week' : s.vitals.rhr > 80 ? 'Watch' : 'In range')}</td></tr>`;
         const m = mk(CORE[k]); if (!m) return '';
         const e = OS.markerEval(m);
-        return `<tr><td><b>${esc(m.name)}</b><span class="muted small block">Biology panel</span></td><td class="num">${m.value} ${esc(m.unit)}</td><td>${pill(e.status, e.label)}</td></tr>`;
+        return `<tr><td><b>${esc(m.name)}</b><span class="muted small block">Biology panel</span></td><td class="num">${OS.dash(m.value)} ${esc(m.unit)}</td><td>${pill(e.status, e.label)}</td></tr>`;
       }).join('');
       const nS = SUPPS.filter((x) => inProto.has('stk-' + x.id)).length;
       return `${OS.ui.head('Supplements · ergogenic aids · PED safety', 'Stack', 'Evidence-graded supplements matched to your athlete type, labs and DNA, plus a straight reference on performance-enhancing drugs.',

@@ -40,7 +40,7 @@
           <h1>Welcome to the master operating system for your body.</h1>
           <p class="wl-lead">Myo reads your labs, wearables, scans, training and daily life, scores every system of your body, and runs a plan each day that moves you toward peak range. Physician-optional, measured and safe.</p>
           <div class="wl-cta"><a class="btn wl-btn" href="#wl-setup" data-act="wl-scroll">${done === st.length ? 'Review setup' : 'Start setup'}</a><a class="btn ghost wl-btn-ghost" href="#body">Explore your body in 3D</a></div>
-          <dl class="wl-stats"><div><dt>MK Score</dt><dd class="num">${sc.mk}</dd></div><div><dt>Readiness</dt><dd class="num">${sc.readiness}</dd></div><div><dt>Biomarkers</dt><dd class="num">${s.markers.length}</dd></div><div><dt>Body systems</dt><dd class="num">9</dd></div></dl>
+          <dl class="wl-stats"><div><dt>MK Score</dt><dd class="num">${OS.dash(sc.mk)}</dd></div><div><dt>Readiness</dt><dd class="num">${OS.dash(sc.readiness)}</dd></div><div><dt>Biomarkers</dt><dd class="num">${s.markers.length}</dd></div><div><dt>Body systems</dt><dd class="num">9</dd></div></dl>
         </div>
         <div class="wl-figure"><div class="a3d" data-a3d="compact" data-systems="skin,cardiovascular,nervous" aria-label="3D body"></div></div>
       </section>
@@ -65,7 +65,7 @@
         <ol class="wl-week">${WEEK.map(([t, d, r], i) => `<li><a href="#${r}"><span class="wl-day">Day ${i + 1}</span><b>${t}</b><span>${d}</span></a></li>`).join('')}</ol>
       </section>
 
-      <section class="wl-sec" id="wl-setup" aria-labelledby="wl-set"><div class="wl-sec-h"><p class="eyebrow">Set up Myo</p><h2 id="wl-set">Six steps to your first real score</h2>
+      <section class="wl-sec" id="wl-setup" aria-labelledby="wl-set"><div class="wl-sec-h"><p class="eyebrow">Set up Myo</p><h2 id="wl-set">Six steps to your first real score</h2>${OS.sampleBanner ? OS.sampleBanner(s) : ''}
           <div class="wl-prog"><span class="wl-bar"><i style="width:${Math.round((done / st.length) * 100)}%"></i></span><b class="num">${done} of ${st.length}</b></div></div>
         <ol class="wl-steps">${st.map((x, i) => `<li class="${x.done ? 'is-done' : ''}">
             <span class="wl-check" aria-hidden="true">${x.done ? icon('check', 16) : `<span class="num">${i + 1}</span>`}</span>

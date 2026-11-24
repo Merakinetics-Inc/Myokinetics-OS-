@@ -44,8 +44,8 @@
   document.addEventListener('click', (e) => { const sh = document.getElementById('sheet'); if (sh && !sh.hidden && (e.target === sh || e.target.closest('.sheet a'))) sh.hidden = true; });
   function header() {
     const sc = OS.scores(OS.state);
-    document.getElementById('hdr-score').textContent = sc.mk;
-    document.getElementById('hdr-ready').textContent = sc.readiness;
+    document.getElementById('hdr-score').textContent = OS.dash(sc.mk);
+    document.getElementById('hdr-ready').textContent = OS.dash(sc.readiness);
     const u = OS.auth && OS.auth.user, av = document.getElementById('avatar');
     av.textContent = u ? OS.auth.initials() : (OS.state.profile.initials || 'MK');
     av.dataset.auth = u ? 'in' : 'out';

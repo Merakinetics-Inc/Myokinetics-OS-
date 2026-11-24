@@ -53,7 +53,7 @@
       const niceMax = Math.ceil(maxV / 2000) * 2000;
       const bars = log.map((l, i) => { const h = (l.volume / niceMax) * 120; return `<g><rect x="${40 + i * 22}" y="${140 - h}" width="14" height="${h}" rx="2" fill="var(--accent)" opacity="${i === log.length - 1 ? 1 : 0.55}"><title>${fmtDate(l.date)} · ${l.name} · ${fmt(l.volume)} lb</title></rect></g>`; }).join('');
       const ticks = [0, niceMax / 2, niceMax].map((v) => `<g><line x1="34" x2="${40 + log.length * 22}" y1="${140 - (v / niceMax) * 120}" y2="${140 - (v / niceMax) * 120}" stroke="var(--line)"/><text x="30" y="${144 - (v / niceMax) * 120}" text-anchor="end" class="axis">${fmt(v / 1000)}k</text></g>`).join('');
-      return `${H().head(`${pr.name} · week ${pr.week} of ${pr.weeks}`, `Today: ${ses.name}`, `${done.length} of ${all.length} sets · ${fmt(vol)} lb volume · readiness ${sc.readiness}`, `<div class="hstat"><span>Training score</span><b class="num">${sc.parts.training.toFixed(0)}</b></div><button class="btn" data-act="session-finish">${icon('check', 16)} Finish session</button>`)}
+      return `${H().head(`${pr.name} · week ${pr.week} of ${pr.weeks}`, `Today: ${ses.name}`, `${done.length} of ${all.length} sets · ${fmt(vol)} lb volume${sc.readiness == null ? '' : ' · readiness ' + sc.readiness}`, `<div class="hstat"><span>Training score</span><b class="num">${OS.dash(sc.parts.training, 0)}</b></div><button class="btn" data-act="session-finish">${icon('check', 16)} Finish session</button>`)}
       <div class="grid g-2-1">
         <div class="stack">${exRows}</div>
         <div class="stack">

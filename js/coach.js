@@ -9,7 +9,7 @@
     const meals = s.nutrition.meals[k] || [];
     return {
       date: k, profile: { age: s.profile.age, sex: s.profile.sex, weightKg: s.profile.weightKg, heightCm: s.profile.heightCm, goal: s.profile.goal },
-      scores: { mkScore: sc.mk, readiness: sc.readiness, ...Object.fromEntries(Object.entries(sc.parts).map(([a, b]) => [a, Math.round(b)])) },
+      scores: { mkScore: sc.mk, readiness: sc.readiness, ...Object.fromEntries(Object.entries(sc.parts).map(([a, b]) => [a, b == null ? null : Math.round(b)])) },
       vitals: s.vitals, wearableSource: s.vitals.src || 'sample vitals',
       biomarkers: sc.markers.map(({ m, e }) => ({ name: m.name, value: m.value, unit: m.unit, optimal: OS.ui.fmtR(m.optimal), peak: OS.ui.fmtR(OS.peakOf(m)), tier: e.label })),
       athleteGoal: s.athlete ? { target: s.athlete.target, activeProgram: s.athlete.active || null, genotypes: s.athlete.dna, breathMorningReadings: (s.athlete.breath || []).slice(-7).map((b) => b.v) } : null,
@@ -62,7 +62,7 @@ Mind: if the member mentions suicide, self-harm or a crisis, respond with care, 
   function offlineAnswer(q) {
     const s = OS.state, sc = OS.scores(s), snap = snapshot(), ql = q.toLowerCase();
     const worst = [...sc.flagged].sort((a, b) => a.e.score - b.e.score).slice(0, 3);
-    if (/sleep|tired|fatigue|recover/.test(ql)) return `Sleep last night: **${s.vitals.sleepH} h**, score ${s.vitals.sleepScore}. Readiness is **${sc.readiness}**.\n- Keep the 22:30 sleep window and screens off by 22:15\n- Magnesium glycinate 400 mg before bed is in your protocol\n- 10 minutes of morning light tomorrow anchors the rhythm`;
+    if (/sleep|tired|fatigue|recover/.test(ql)) return `${s.vitals.sleepH == null ? 'No sleep data yet: connect a ring or strap on Wearables, or log nights on Sleep.' : `Sleep last night: **${s.vitals.sleepH} h**, score ${s.vitals.sleepScore}. Readiness is **${sc.readiness ?? '—'}**.`}\n- Keep the 22:30 sleep window and screens off by 22:15\n- Magnesium glycinate 400 mg before bed is in your protocol\n- 10 minutes of morning light tomorrow anchors the rhythm`;
     if (/protein|eat|food|meal|macro|calorie/.test(ql)) { const n = snap.nutritionToday; return `Today you've had **${n.eaten.p} g protein** of ${n.targets.p} g and ${n.eaten.kcal} of ${n.targets.kcal} kcal.\n- Aim for about ${Math.round(n.targets.p / 4)} g per meal\n- Put 40 g carbs + 30 g protein within an hour after the Upper Push session`; }
     if (/lab|marker|vitamin|blood|apob|crp/.test(ql)) return `Your biggest levers right now:\n${worst.map((x) => `- **${x.m.name}** ${x.m.value} ${x.m.unit} (optimal ${OS.ui.fmtR(x.m.optimal)})`).join('\n')}\nYour protocol already targets these. Retest in about ${s.retestDays} days, and talk to a clinician about anything out of range.`;
     return `${OS.coachLine(s, sc).replace(/<\/?b>/g, '**')}\n\nToday's session is **${s.training.session.name}** with ${s.training.session.exercises.length} exercises.`;
@@ -109,7 +109,7 @@ Mind: if the member mentions suicide, self-harm or a crisis, respond with care, 
     title: 'Coach', icon: 'coach',
     render(s, sc) {
       const on = !!(OS.caps && OS.caps.sample);
-      const msgs = s.chat.length ? s.chat : [{ role: 'assistant', content: `I'm Myo. I can see your MK Score (**${sc.mk}**), readiness (**${sc.readiness}**), ${s.markers.length} biomarkers, today's session and your day plan.\n\nAsk me anything about training, labs, food or recovery. I can also add actions to your protocol and blocks to your day.` }];
+      const msgs = s.chat.length ? s.chat : [{ role: 'assistant', content: sc.mk == null ? `I'm Myo. Your account is new, so I have no scores yet. Add your labs on Biology, connect a ring or strap, or log a session, and I'll read them with you.` : `I'm Myo. I can see your MK Score (**${sc.mk}**), readiness (**${sc.readiness ?? '—'}**), ${s.markers.length} biomarkers, today's session and your day plan.\n\nAsk me anything about training, labs, food or recovery. I can also add actions to your protocol and blocks to your day.` }];
       return `${OS.ui.head('Intelligence layer', 'Myo, your AI coach', on ? 'Reads your full health graph each time you ask. Can update your protocol and schedule.' : 'Running the offline coach. Open in Claude for the full AI coach.')}
       <div class="grid g-chat">
         <section class="card flush chat">
@@ -123,7 +123,7 @@ Mind: if the member mentions suicide, self-harm or a crisis, respond with care, 
             <div class="av-btns">${OS.caps && OS.caps.dictation ? `<button class="btn sm" data-act="myo-mic" aria-pressed="false">${icon('mic', 15)}<span> Talk to Myo</span></button>` : ''}${OS.caps && OS.caps.tts ? `<button class="btn ghost sm ${OS.Avatar.voice ? 'on' : ''}" data-act="myo-voice" aria-pressed="${OS.Avatar.voice}">${icon('speaker', 15)}<span> ${OS.Avatar.voice ? 'Voice on' : 'Voice off'}</span></button>` : ''}</div>
             ${!(OS.caps && (OS.caps.dictation || OS.caps.tts)) ? '<p class="fine">Voice works when Myo is opened in Claude in a browser that supports it.</p>' : ''}</section>` : ''}
           <section class="card"><div class="card-h"><h2>What Myo sees</h2></div>
-            <ul class="sees"><li><span>MK Score</span><b class="num">${sc.mk}</b></li><li><span>Readiness</span><b class="num">${sc.readiness}</b></li><li><span>Markers to improve</span><b class="num">${sc.flagged.length}</b></li><li><span>Protocol actions</span><b class="num">${protocol(s, sc).length}</b></li><li><span>Sets today</span><b class="num">${s.training.session.exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0)}</b></li></ul>
+            <ul class="sees"><li><span>MK Score</span><b class="num">${OS.dash(sc.mk)}</b></li><li><span>Readiness</span><b class="num">${OS.dash(sc.readiness)}</b></li><li><span>Markers to improve</span><b class="num">${sc.flagged.length}</b></li><li><span>Protocol actions</span><b class="num">${protocol(s, sc).length}</b></li><li><span>Sets today</span><b class="num">${s.training.session.exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0)}</b></li></ul>
           </section>
           <section class="card"><div class="card-h"><h2>Myo can</h2></div><ul class="cans"><li>Adjust today's training to readiness</li><li>Explain biomarkers against optimal ranges</li><li>Add protocol actions and schedule blocks</li><li>Plan meals to your macro targets</li><li>Turn AR-Vision cues into drills</li></ul>
           ${s.chat.length ? `<button class="btn ghost sm" data-act="chat-clear">Clear conversation</button>` : ''}</section>

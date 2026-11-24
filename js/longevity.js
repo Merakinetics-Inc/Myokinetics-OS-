@@ -75,9 +75,11 @@
     const G = ensure(s), b = s.athlete && s.athlete.bench && s.athlete.bench.runner && parseFloat(s.athlete.bench.runner.vo2);
     if (G.vo2) return { v: +G.vo2, src: 'Measured' };
     if (b) return { v: b, src: 'Runner benchmark' };
+    if (!s.vitals.rhr) return { v: null, src: 'Needs a resting heart rate or a VO2max test' };
     return { v: 15.3 * (208 - 0.7 * s.profile.age) / s.vitals.rhr, src: 'Estimated from resting HR' };
   }
   function fitnessAge(sex, v) {
+    if (v == null || !Number.isFinite(v)) return null;
     const t = VO2_MED[sex === 'F' ? 'F' : 'M'];
     if (v >= t[0][1]) return 25 - (v - t[0][1]) * 0.8;
     for (let i = 0; i < t.length - 1; i++) {
@@ -97,25 +99,25 @@
     const G = ensure(s), wht = G.waist ? G.waist / s.profile.heightCm : null;
     const bp = labs.sbp ? clamp(100 - Math.max(0, labs.sbp - 115) * 2.2 - Math.max(0, (labs.dbp || 75) - 75) * 2, 20, 100) : null;
     return {
-      cardio: Math.round(clamp(v.v / tgt, 0, 1) * 100),
+      cardio: v.v == null ? null : Math.round(clamp(v.v / tgt, 0, 1) * 100),
       muscle: cap ? Math.round((cap.strength * 0.6 + cap.power * 0.4) * 100) : null,
       metabolic: avg([e('a1c'), e('ins'), e('glu'), e('tg'), wht ? Math.round(clamp(100 - (wht - 0.45) * 400, 20, 100)) : null]),
       heart: avg([e('apob'), e('lpa'), e('hdl'), bp]),
       inflam: avg([e('crp'), e('hcy')]),
-      sleep: Math.round(clamp((s.vitals.sleepScore + clamp(100 - Math.abs(s.vitals.sleepH - 8) * 25, 0, 100)) / 2, 0, 100)),
-      mind: Math.round((sc.parts.life || 70))
+      sleep: s.vitals.sleepH == null ? null : Math.round(clamp(((s.vitals.sleepScore ?? 75) + clamp(100 - Math.abs(s.vitals.sleepH - 8) * 25, 0, 100)) / 2, 0, 100)),
+      mind: sc.parts.life == null ? null : Math.round(sc.parts.life)
     };
   }
 
   function summary(s, sc) {
     const pa = phenoAge(s), v = vo2Of(s), fa = fitnessAge(s.profile.sex, v.v);
-    const parts = [pa, fa].filter((x) => x != null), myo = parts.reduce((a, b) => a + b, 0) / parts.length;
+    const parts = [pa, fa].filter((x) => x != null), myo = parts.length ? parts.reduce((a, b) => a + b, 0) / parts.length : null;
     return { age: s.profile.age, phenoAge: pa, vo2: v, fitnessAge: fa, myoAge: myo, pillars: pillars(s, sc || OS.scores(s)) };
   }
 
   const tone = (n) => (n == null ? 'muted' : n >= 85 ? 'peak' : n >= 70 ? 'good' : n >= 55 ? 'warn' : 'bad');
   const d1 = (x) => (x == null ? '—' : x.toFixed(1));
-  const delta = (bio, age) => { const d = bio - age; return `${d <= 0 ? '−' : '+'}${Math.abs(d).toFixed(1)} y`; };
+  const delta = (bio, age) => { if (bio == null || age == null) return '—'; const d = bio - age; return `${d <= 0 ? '−' : '+'}${Math.abs(d).toFixed(1)} y`; };
 
   function ageLine(age, pts) {
     const lo = Math.min(age, ...pts.map((p) => p[1])) - 6, hi = Math.max(age, ...pts.map((p) => p[1])) + 6, X = (a) => 20 + ((a - lo) / (hi - lo)) * 560;
@@ -125,7 +127,7 @@
       <rect x="20" y="22" width="560" height="8" rx="4" fill="url(#lgg)" opacity=".55"/>
       <line x1="${X(age)}" x2="${X(age)}" y1="6" y2="46" stroke="currentColor" stroke-width="3" stroke-dasharray="4 4"/>
       <text x="${X(age)}" y="66" text-anchor="middle" class="lg-t b">You ${age}</text>
-      ${pts.map(([l, a], i) => `<circle cx="${X(a)}" cy="26" r="11" class="lg-dot lg-d${i}"><title>${esc(l)} ${a.toFixed(1)}</title></circle>`).join('')}
+      ${pts.map(([l, a], i) => `<circle cx="${X(a)}" cy="26" r="11" class="lg-dot lg-d${i}"><title>${esc(l)} ${d1(a)}</title></circle>`).join('')}
     </svg>`;
   }
 
@@ -140,8 +142,8 @@
       const pillarRows = PILLARS.map(([k, l]) => `<div class="lg-pil ${weakest.includes(k) ? 'focus' : ''}"><div class="lg-pil-h"><span>${esc(l)}</span><b class="num">${P[k] ?? '—'}</b></div>
           <div class="lg-bar"><i class="t-${tone(P[k])}" style="width:${P[k] ?? 0}%"></i></div>${weakest.includes(k) ? '<span class="tag tag-go">Biggest lever now</span>' : ''}</div>`).join('');
       const targets = [['apob', '< 60 mg/dL'], ['lpa', '< 30 nmol/L, test once'], ['a1c', '4.6–5.1%'], ['ins', '2–5 µIU/mL'], ['crp', '< 0.5 mg/L'], ['hcy', '< 7 µmol/L'], ['o3', '8–12%'], ['vitd', '50–60 ng/mL']]
-        .map(([id, t]) => { const m = mk(s, id); if (!m) return ''; const e = OS.markerEval(m); return `<tr><td><b>${esc(m.name)}</b></td><td class="num">${m.value} ${esc(m.unit)}</td><td class="num">${esc(t)}</td><td>${pill(e.status, e.label)}</td></tr>`; }).join('')
-        + `<tr><td><b>VO₂max</b><span class="muted small block">${esc(S.vo2.src)}</span></td><td class="num">${S.vo2.v.toFixed(1)} ml/kg/min</td><td class="num">≥ ${tgt} (elite for age)</td><td>${pill(S.vo2.v >= tgt ? 'good' : S.vo2.v >= tgt * 0.8 ? 'warn' : 'bad', S.vo2.v >= tgt ? 'Elite' : S.vo2.v >= tgt * 0.8 ? 'Above average' : 'Build it')}</td></tr>`
+        .map(([id, t]) => { const m = mk(s, id); if (!m) return ''; const e = OS.markerEval(m); return `<tr><td><b>${esc(m.name)}</b></td><td class="num">${OS.dash(m.value)} ${esc(m.unit)}</td><td class="num">${esc(t)}</td><td>${pill(e.status, e.label)}</td></tr>`; }).join('')
+        + `<tr><td><b>VO₂max</b><span class="muted small block">${esc(S.vo2.src)}</span></td><td class="num">${S.vo2.v == null ? '—' : d1(S.vo2.v) + ' ml/kg/min'}</td><td class="num">≥ ${tgt} (elite for age)</td><td>${S.vo2.v == null ? pill('muted', 'No data yet') : pill(S.vo2.v >= tgt ? 'good' : S.vo2.v >= tgt * 0.8 ? 'warn' : 'bad', S.vo2.v >= tgt ? 'Elite' : S.vo2.v >= tgt * 0.8 ? 'Above average' : 'Build it')}</td></tr>`
         + `<tr><td><b>Blood pressure</b></td><td class="num">${labs.sbp ? `${labs.sbp}/${labs.dbp || '?'}` : '—'} mmHg</td><td class="num">< 120/80</td><td>${labs.sbp ? pill(labs.sbp < 120 && (labs.dbp || 0) < 80 ? 'good' : labs.sbp < 140 ? 'warn' : 'bad', labs.sbp < 120 && (labs.dbp || 0) < 80 ? 'Peak' : labs.sbp < 140 ? 'Raised' : 'High') : '<span class="muted small">Enter below</span>'}</td></tr>`
         + `<tr><td><b>Waist-to-height</b></td><td class="num">${G.waist ? (G.waist / s.profile.heightCm).toFixed(2) : '—'}</td><td class="num">< 0.50</td><td>${G.waist ? pill(G.waist / s.profile.heightCm < 0.5 ? 'good' : 'warn', G.waist / s.profile.heightCm < 0.5 ? 'Peak' : 'Above target') : '<span class="muted small">Enter below</span>'}</td></tr>`;
       const protoCards = PROTO.map(([id, pil, gr, t, d]) => {
@@ -158,12 +160,12 @@
         <div class="lg-hero-l">
           <span class="lg-k">Biological age</span>
           <div class="lg-big"><b class="num">${d1(S.myoAge)}</b><span>years<br>you are ${age}</span></div>
-          <p>${S.myoAge < age ? `Your body is ageing like someone ${Math.abs(S.myoAge - age).toFixed(1)} years younger. Keep pushing the two weakest pillars.` : `Your body is ageing like someone ${Math.abs(S.myoAge - age).toFixed(1)} years older. The protocol below targets the fastest wins.`}</p>
+          <p>${S.myoAge == null ? 'Add a resting heart rate (connect a ring or strap) or a VO₂max test, plus the PhenoAge blood markers, and Myo estimates how fast your body is ageing.' : S.myoAge < age ? `Your body is ageing like someone ${Math.abs(S.myoAge - age).toFixed(1)} years younger. Keep pushing the two weakest pillars.` : `Your body is ageing like someone ${Math.abs(S.myoAge - age).toFixed(1)} years older. The protocol below targets the fastest wins.`}</p>
         </div>
         <div class="lg-hero-r">
           ${ageLine(age, pts)}
           <div class="lg-mini"><div><span><i class="lg-key lg-d0"></i>PhenoAge</span><b class="num">${d1(S.phenoAge)}</b><em>${S.phenoAge != null ? delta(S.phenoAge, age) : 'Add 7 labs below'}</em></div>
-            <div><span><i class="lg-key lg-d1"></i>Fitness age</span><b class="num">${d1(S.fitnessAge)}</b><em>VO₂max ${S.vo2.v.toFixed(1)}</em></div>
+            <div><span><i class="lg-key lg-d1"></i>Fitness age</span><b class="num">${d1(S.fitnessAge)}</b><em>VO₂max ${d1(S.vo2.v)}</em></div>
             <div><span>Peak markers</span><b class="num">${sc.peak}</b><em>of ${sc.markers.length}</em></div></div>
         </div>
       </section>
@@ -171,7 +173,7 @@
         <section class="card"><div class="card-h"><h2>Healthspan pillars</h2><span class="muted small">0–100 · aim for 85+</span></div><div class="lg-pils">${pillarRows}</div></section>
         <section class="card"><div class="card-h"><h2>Your numbers</h2></div>
           <form class="bench" data-submit="lng-in">
-            <label class="field" for="lg-vo2"><span>VO₂max <em>ml/kg/min, from a lab test or watch</em></span><input id="lg-vo2" name="vo2" type="number" step="0.1" value="${G.vo2 ?? ''}" placeholder="${S.vo2.v.toFixed(1)} est."></label>
+            <label class="field" for="lg-vo2"><span>VO₂max <em>ml/kg/min, from a lab test or watch</em></span><input id="lg-vo2" name="vo2" type="number" step="0.1" value="${G.vo2 ?? ''}" placeholder="${S.vo2.v == null ? 'e.g. 45' : d1(S.vo2.v) + ' est.'}"></label>
             <label class="field" for="lg-grip"><span>Grip strength <em>kg, best hand</em></span><input id="lg-grip" name="grip" type="number" step="0.5" value="${G.grip ?? ''}"></label>
             <label class="field" for="lg-waist"><span>Waist <em>cm, at the navel</em></span><input id="lg-waist" name="waist" type="number" step="0.5" value="${G.waist ?? ''}"></label>
             <label class="field" for="lg-sbp"><span>Blood pressure <em>systolic / diastolic</em></span><span class="row"><input id="lg-sbp" name="sbp" type="number" value="${labs.sbp ?? ''}" placeholder="120" aria-label="Systolic"><input name="dbp" type="number" value="${labs.dbp ?? ''}" placeholder="80" aria-label="Diastolic"></span></label>
@@ -235,7 +237,7 @@
     if (!sample) { OS.update((st) => { ensure(st).plan = { text: fallback(), at: new Date().toISOString() }; }); return; }
     busy = true; OS.render();
     const data = {
-      profile: s.profile, chronologicalAge: s.profile.age, myoAge: +d1(S.myoAge), phenoAge: S.phenoAge && +d1(S.phenoAge), fitnessAge: +d1(S.fitnessAge), vo2max: { value: +S.vo2.v.toFixed(1), source: S.vo2.src, eliteTarget: vo2Target(s.profile.sex, s.profile.age) },
+      profile: s.profile, chronologicalAge: s.profile.age, myoAge: +d1(S.myoAge), phenoAge: S.phenoAge && +d1(S.phenoAge), fitnessAge: +d1(S.fitnessAge), vo2max: { value: S.vo2.v == null ? null : +S.vo2.v.toFixed(1), source: S.vo2.src, eliteTarget: vo2Target(s.profile.sex, s.profile.age) },
       pillars: S.pillars, weakestPillars: weak.slice(0, 2).map((w) => w[1]), gripKg: G.grip, waistCm: G.waist, bloodPressure: s.enhance && s.enhance.labs ? { sbp: s.enhance.labs.sbp, dbp: s.enhance.labs.dbp } : null,
       biomarkers: sc.markers.map(({ m, e }) => `${m.name} ${m.value} ${m.unit} (${e.label}, peak ${OS.ui.fmtR(OS.peakOf(m))})`), phenoLabs: G.ph, vitals: s.vitals, redFlags: sc.redFlags,
       training: s.training.program, protocolLibrary: PROTO.map((p) => `${p[3]} [${p[2]}]`)

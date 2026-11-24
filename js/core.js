@@ -32,8 +32,9 @@
   }
 
   function ring(value, size = 120, stroke = 9, label = '') {
-    const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - clamp(value, 0, 100) / 100);
-    return `<svg class="ring" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="${esc(label)} ${Math.round(value)} of 100">
+    const none = value == null || !Number.isFinite(Number(value));
+    const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - (none ? 0 : clamp(value, 0, 100)) / 100);
+    return `<svg class="ring" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="${esc(label)} ${none ? 'not scored yet' : Math.round(value) + ' of 100'}">
       <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${stroke}"/>
       <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--accent)" stroke-width="${stroke}" stroke-linecap="round"
         stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 ${size / 2} ${size / 2})"/></svg>`;
@@ -211,6 +212,30 @@
     };
   }
 
+  /* ── a member's own start: the catalogue stays (markers, machines, programs), everything personal is empty ── */
+  function blank() {
+    const s = seed();
+    s.sample = false; s.fresh = true; delete s.sampleEdited;
+    // neutral body numbers keep the calculators working until the member saves their profile (profile.unset)
+    s.profile = { name: '', initials: '', age: 35, sex: 'M', weightKg: 75, heightCm: 175, goal: 'recomp', activity: 1.55, unset: true };
+    s.markers.forEach((m) => { m.value = null; m.history = []; });
+    s.labsDate = null;
+    s.wearables = { oura: false, whoop: false, apple: false, garmin: false };
+    s.vitals = { hrv: null, hrvBase: null, rhr: null, rhrBase: null, sleepH: null, sleepScore: null, steps: null, hrvTrend: [] };
+    s.protocolDone = {}; s.customProtocol = [];
+    s.training.program = { name: 'No program yet', week: 1, weeks: 8, perWeek: 3, focus: 'Pick a program to start' };
+    s.training.session = { name: 'No session planned', date: dayKey(), exercises: [] };
+    s.training.log = [];
+    s.nutrition = { meals: {}, water: {} };
+    s.life = { habits: [], blocks: [], goals: [], mood: {} };
+    s.gym = { name: 'My floor', w: 40, l: 30, clear: 3, items: [] };
+    s.chat = [];
+    return s;
+  }
+  // a number for display, or an em dash when there is no data yet
+  const dash = (x, d) => (x == null || x === '' || !Number.isFinite(Number(x)) ? '—' : d == null ? String(x) : Number(x).toFixed(d));
+  const hasValue = (m) => m && m.value != null && m.value !== '' && Number.isFinite(Number(m.value));
+
   /* ── score engine ────────────────────────────────────────────────── */
   const inRange = (v, r) => (r[0] == null || v >= r[0]) && (r[1] == null || v <= r[1]);
   // Peak tier: the top of the performance / longevity range, inside optimal. Keyed by marker id.
@@ -231,7 +256,7 @@
   };
   function redFlags(s) {
     const out = [];
-    s.markers.forEach((m) => { const d = DANGER[m.id]; if (!d) return; const v = Number(m.value); if ((d[0] != null && v < d[0]) || (d[1] != null && v > d[1])) out.push({ id: m.id, name: m.name, value: v, unit: m.unit, why: d[2] }); });
+    s.markers.forEach((m) => { const d = DANGER[m.id]; if (!d || !hasValue(m)) return; const v = Number(m.value); if ((d[0] != null && v < d[0]) || (d[1] != null && v > d[1])) out.push({ id: m.id, name: m.name, value: v, unit: m.unit, why: d[2] }); });
     const vt = s.vitals || {};
     const el = (s.enhance && s.enhance.labs) || {};
     if (el.hct >= 60) out.push({ id: 'hct', name: 'Hematocrit', value: el.hct, unit: '%', why: 'Blood this thick sharply raises the risk of clots and stroke' });
@@ -243,6 +268,7 @@
   // distance from a value to a range, normalised by a reference width
   const gap = (v, r, width) => { const d = r[0] != null && v < r[0] ? r[0] - v : r[1] != null && v > r[1] ? v - r[1] : 0; return clamp(d / (width || 1), 0, 1); };
   function markerEval(m) {
+    if (!hasValue(m)) return { status: 'muted', tier: 'none', label: 'No result yet', score: null };
     const v = Number(m.value), pk = peakOf(m), o = m.optimal;
     const ow = ((o[1] ?? (o[0] ?? v) * 1.5) - (o[0] ?? 0)) || Math.abs(v) || 1;
     if (DANGER[m.id] && ((DANGER[m.id][0] != null && v < DANGER[m.id][0]) || (DANGER[m.id][1] != null && v > DANGER[m.id][1]))) return { status: 'bad', tier: 'danger', label: 'Red flag', score: 20 };
@@ -254,32 +280,44 @@
     }
     return { status: 'bad', tier: 'out', label: 'Out of range', score: 35 };
   }
+  // Every part is null until there is data for it, and the MK Score averages only the parts that have data:
+  // a new member sees "—", never a made-up number.
   function scores(s) {
     const mk = s.markers.map((m) => ({ m, e: markerEval(m) }));
-    const tw = mk.reduce((a, x) => a + x.m.weight, 0);
-    const biology = mk.reduce((a, x) => a + x.e.score * x.m.weight, 0) / tw;
-    const vt = s.vitals;
-    const readiness = clamp(70 + (vt.hrv / vt.hrvBase - 1) * 60 + (vt.rhrBase - vt.rhr) * 2.5 + (vt.sleepH - 7) * 8 + (vt.sleepScore - 80) * 0.5, 0, 100);
+    const scored = mk.filter((x) => x.e.score != null);
+    const tw = scored.reduce((a, x) => a + x.m.weight, 0);
+    const biology = tw ? scored.reduce((a, x) => a + x.e.score * x.m.weight, 0) / tw : null;
+    const vt = s.vitals || {};
+    const num = (x) => (x == null || x === '' ? null : Number.isFinite(Number(x)) ? Number(x) : null);
+    const hrv = num(vt.hrv), rhr = num(vt.rhr), sleepH = num(vt.sleepH);
+    let readiness = null;
+    if (hrv != null || rhr != null || sleepH != null) {
+      const hb = num(vt.hrvBase) ?? hrv, rb = num(vt.rhrBase) ?? rhr, ss = num(vt.sleepScore);
+      readiness = clamp(70 + (hrv != null && hb ? (hrv / hb - 1) * 60 : 0) + (rhr != null && rb != null ? (rb - rhr) * 2.5 : 0) + (sleepH != null ? (sleepH - 7) * 8 : 0) + (ss != null ? (ss - 80) * 0.5 : 0), 0, 100);
+    }
     const since = dayKey(addDays(new Date(), -7));
-    const sessions7 = s.training.log.filter((l) => l.date >= since).length;
-    const ses = s.training.session.exercises.flatMap((e) => e.sets);
+    const log = s.training.log || [], sesEx = (s.training.session && s.training.session.exercises) || [];
+    const sessions7 = log.filter((l) => l.date >= since).length;
+    const ses = sesEx.flatMap((e) => e.sets);
     const sessionPct = ses.filter((x) => x.done).length / Math.max(1, ses.length);
-    const training = clamp((sessions7 / s.training.program.perWeek) * 85 + sessionPct * 15, 0, 100);
+    const training = log.length || ses.some((x) => x.done) ? clamp((sessions7 / (s.training.program.perWeek || 3)) * 85 + sessionPct * 15, 0, 100) : null;
     const tg = targets(s.profile);
-    const days = [-3, -2, -1].map((d) => s.nutrition.meals[dayKey(addDays(new Date(), d))] || []);
-    const nutrition = days.reduce((a, ms) => {
+    const days = [-3, -2, -1].map((d) => s.nutrition.meals[dayKey(addDays(new Date(), d))] || []).filter((ms) => ms.length);
+    const nutrition = days.length ? clamp(days.reduce((a, ms) => {
       const kcal = ms.reduce((x, m) => x + m.kcal, 0), p = ms.reduce((x, m) => x + m.p, 0);
       return a + (clamp(p / tg.p, 0, 1.1) * 55 + (1 - clamp(Math.abs(kcal - tg.kcal) / tg.kcal, 0, 1)) * 45);
-    }, 0) / days.length;
+    }, 0) / days.length, 0, 100) : null;
     const keys = Array.from({ length: 7 }, (_, i) => dayKey(addDays(new Date(), i - 6)));
-    const hab = s.life.habits.length ? s.life.habits.reduce((a, h) => a + keys.filter((kk) => h.log[kk]).length, 0) / (s.life.habits.length * 7) : 0.5;
-    const moods = Object.values(s.life.mood).slice(-5);
-    const moodAvg = moods.length ? moods.reduce((a, m) => a + (m.mood * 2 - m.stress + 3), 0) / moods.length / 10 : 0.6;
-    const life = clamp(hab * 70 + moodAvg * 30, 0, 100);
-    const parts = { biology, recovery: readiness, training, nutrition: clamp(nutrition, 0, 100), life };
+    const habits = s.life.habits || [], moods = Object.values(s.life.mood || {}).slice(-5);
+    const hab = habits.length ? habits.reduce((a, h) => a + keys.filter((kk) => h.log[kk]).length, 0) / (habits.length * 7) : null;
+    const moodAvg = moods.length ? moods.reduce((a, m) => a + (m.mood * 2 - m.stress + 3), 0) / moods.length / 10 : null;
+    const life = hab == null && moodAvg == null ? null : clamp((hab ?? 0.5) * 70 + (moodAvg ?? 0.6) * 30, 0, 100);
+    const parts = { biology, recovery: readiness, training, nutrition, life };
     const W = { biology: 0.3, recovery: 0.2, training: 0.2, nutrition: 0.15, life: 0.15 };
-    const mkScore = Object.keys(W).reduce((a, k) => a + parts[k] * W[k], 0);
-    return { mk: Math.round(mkScore), parts, readiness: Math.round(readiness), markers: mk, flagged: mk.filter((x) => x.e.status !== 'good'), peak: mk.filter((x) => x.e.tier === 'peak').length, redFlags: redFlags(s) };
+    const have = Object.keys(W).filter((k) => parts[k] != null), ww = have.reduce((a, k) => a + W[k], 0);
+    const mkScore = ww ? have.reduce((a, k) => a + parts[k] * W[k], 0) / ww : null;
+    const r = (x) => (x == null ? null : Math.round(x));
+    return { mk: r(mkScore), parts, readiness: r(readiness), markers: mk, flagged: scored.filter((x) => x.e.status !== 'good'), peak: scored.filter((x) => x.e.tier === 'peak').length, redFlags: redFlags(s), empty: !have.length };
   }
 
   function targets(p) {
@@ -310,7 +348,9 @@
     const items = RULES.filter((r) => { try { return !flagged.has(r.marker) && r.when(g); } catch { return false; } }).map((r) => ({ ...r }));
     const rd = sc.readiness;
     const sess = s.training.session;
-    items.unshift(rd >= 60
+    if (!sess.exercises.length) items.unshift({ id: 'p-train', cat: 'training', time: 'Today', title: 'Choose a training program', detail: 'Pick a program on Training and Myo builds each session around your readiness.', marker: null, route: 'training' });
+    else if (rd == null) items.unshift({ id: 'p-train', cat: 'training', time: '11:30', title: `${sess.name} · ${s.training.program.name}`, detail: `${sess.exercises.length} exercises. Connect a ring or strap and Myo will adjust the load to your readiness each day.`, marker: null, route: 'training' });
+    else items.unshift(rd >= 60
       ? { id: 'p-train', cat: 'training', time: '11:30', title: `${sess.name} · ${s.training.program.name}`, detail: `Readiness ${rd}. Train as written: ${sess.exercises.length} exercises on APS Machine, ISO Flow and Dumbbell Hangers.`, marker: null, route: 'training' }
       : { id: 'p-train', cat: 'training', time: '11:30', title: 'Recovery session instead of Upper Push', detail: `Readiness ${rd} is below 60. Swap to 30 min mobility plus Zone 2 and push the heavy session 24 h.`, marker: null, route: 'training' });
     const tg = targets(s.profile);
@@ -354,7 +394,7 @@
   const listeners = {};
   const OS = {
     esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
-    seed, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
+    seed, blank, hasValue, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
     views: {}, order: [], acts: {}, changes: {},
     state: null, current: null, cleanup: null,
     on(ev, fn) { (listeners[ev] = listeners[ev] || []).push(fn); },
@@ -380,9 +420,15 @@
       this.current = name;
       const v = this.views[name];
       const sc = scores(this.state);
-      root.innerHTML = v.render(this.state, sc);
-      const c = v.mount && v.mount(root, this.state, sc);
-      if (typeof c === 'function') this.cleanup = c;
+      // one page failing must never blank the app: show what broke and keep navigation working
+      try {
+        root.innerHTML = v.render(this.state, sc);
+        const c = v.mount && v.mount(root, this.state, sc);
+        if (typeof c === 'function') this.cleanup = c;
+      } catch (e) {
+        console.error('[Myo] page failed:', name, e);
+        root.innerHTML = `<section class="card"><h2>This page couldn't load</h2><p class="small">${esc((e && e.message) || String(e))}</p><p class="fine">Your data is safe. Try another page, or reload.</p></section>`;
+      }
       scroller.scrollTop = keep;
       document.title = 'Myo';
       this.emit('route', name);

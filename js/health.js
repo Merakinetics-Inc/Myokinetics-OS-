@@ -1,15 +1,32 @@
 /* ═══ MYOKINETICS OS v4 — HEALTH LAYER: Today · Biology · Fuel · Life · Profile ═══ */
 (function () {
   'use strict';
-  const { esc, clamp, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon, targets, protocol, markerEval } = OS;
+  const { esc, clamp, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon, targets, protocol, markerEval, dash: D } = OS;
+  const vs = (a, b, unit = '') => (a == null || b == null ? '' : `${a - b >= 0 ? '+' : ''}${Math.round((a - b) * 10) / 10}${unit} vs base`);
 
   const CAT = { supplement: 'Supplement', training: 'Training', nutrition: 'Nutrition', sleep: 'Sleep', mind: 'Mind', move: 'Move', fuel: 'Fuel', work: 'Work', life: 'Life' };
   const catChip = (c) => `<span class="chip chip-${c}">${esc(CAT[c] || c)}</span>`;
-  const sampleBanner = (s) => s.sample ? `<div class="banner" role="note"><strong>Sample member profile.</strong> Every number here is example data so you can see the system working. Import your labs in Biology and edit your profile to make it yours. <button class="link" data-act="go" data-to="profile">Edit profile</button></div>` : '';
+  // "Start with my own data": two steps, then the member's own empty Myo (OS.blank) replaces the sample member
+  let freshAsk = false;
+  const freshConfirm = () => `<div class="confirm fresh-confirm" role="group" aria-label="Start with your own data"><p><b>Clear the sample member?</b> This removes the example labs, wearable nights, meals, training log, day plan and goals so Myo starts empty with your own data. Your appearance settings and progress photos stay. You can bring the sample back from Profile.</p><div class="row"><button class="btn" data-act="fresh">Yes, start with my own data</button><button class="btn ghost" data-act="fresh-cancel">Keep the sample</button></div></div>`;
+  const sampleBanner = (s) => s.sample ? `<div class="banner sample-banner" role="note"><div><strong>Sample member profile.</strong> Every number here is example data so you can see the system working.</div>
+    ${freshAsk ? freshConfirm() : `<div class="row"><button class="btn sm" data-act="fresh-ask">Start with my own data</button><button class="link small" data-act="go" data-to="profile">Edit profile instead</button></div>`}</div>` : '';
+  OS.sampleBanner = sampleBanner;
+  OS.act('fresh-ask', () => { freshAsk = true; OS.render(); });
+  OS.act('fresh-cancel', () => { freshAsk = false; OS.render(); });
+  OS.act('fresh', () => {
+    const old = OS.state, keep = { termsAccepted: old.termsAccepted, welcomed: old.welcomed };
+    freshAsk = false;
+    OS.state = Object.assign(OS.blank(), keep);
+    OS.Persist.save(OS.state);   // signed in, this also replaces the sample in the member's account
+    OS.go('welcome');
+    setTimeout(() => { const el = document.getElementById('wl-setup'); if (el) el.scrollIntoView({ block: 'start' }); }, 60);
+    OS.toast('Started fresh. Begin with your profile, then labs and a wearable.');
+  });
   const head = (eyebrow, title, sub = '', right = '') => `<header class="vhead"><div><p class="eyebrow">${esc(eyebrow)}</p><h1>${esc(title)}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div>${right ? `<div class="vhead-r">${right}</div>` : ''}</header>`;
 
   function rangeBar(m) {
-    const v = Number(m.value);
+    const v = OS.hasValue(m) ? Number(m.value) : null;
     const nums = [m.normal[0], m.normal[1], m.optimal[0], m.optimal[1], v].filter((x) => x != null);
     let lo = Math.min(...nums), hi = Math.max(...nums);
     const span = hi - lo || Math.abs(hi) || 1;
@@ -22,8 +39,9 @@
   function systemsOf(s, sc) {
     return [...new Set(s.markers.map((m) => m.system))].map((sy) => {
       const xs = sc.markers.filter((x) => x.m.system === sy), w = xs.reduce((a, x) => a + x.m.weight, 0);
-      const score = xs.reduce((a, x) => a + x.e.score * x.m.weight, 0) / w, bad = xs.filter((x) => x.e.status === 'bad').length, warn = xs.filter((x) => x.e.status === 'warn').length;
-      return { sy, n: xs.length, score, bad: bad + warn, status: bad ? 'bad' : warn ? 'warn' : 'good', xs };
+      const sx = xs.filter((x) => x.e.score != null), sw = sx.reduce((a, x) => a + x.m.weight, 0);
+      const score = sw ? sx.reduce((a, x) => a + x.e.score * x.m.weight, 0) / sw : null, bad = xs.filter((x) => x.e.status === 'bad').length, warn = xs.filter((x) => x.e.status === 'warn').length;
+      return { sy, n: xs.length, score, bad: bad + warn, status: !sx.length ? 'muted' : bad ? 'bad' : warn ? 'warn' : 'good', xs };
     });
   }
   // urgent-care alert for dangerous values; the only place the OS sends you out
@@ -45,7 +63,7 @@
       const doneN = items.filter((i) => done[i.id]).length;
       const P = sc.parts;
       const bars = [['Biology', P.biology, 'biology'], ['Recovery', P.recovery, 'biology'], ['Training', P.training, 'training'], ['Nutrition', P.nutrition, 'fuel'], ['Life', P.life, 'life']]
-        .map(([n, v, r]) => `<button class="sbar" data-act="go" data-to="${r}"><span>${n}</span><span class="sbar-track"><span style="width:${v.toFixed(0)}%"></span></span><b class="num">${v.toFixed(0)}</b></button>`).join('');
+        .map(([n, v, r]) => `<button class="sbar" data-act="go" data-to="${r}"><span>${n}</span><span class="sbar-track"><span style="width:${v == null ? 0 : v.toFixed(0)}%"></span></span><b class="num">${D(v, 0)}</b></button>`).join('');
       const vt = s.vitals;
       const now = new Date(), mins = now.getHours() * 60 + now.getMinutes();
       const blocks = [...s.life.blocks].sort((a, b) => a.t.localeCompare(b.t));
@@ -65,22 +83,22 @@
           ${i.route ? `<button class="link small" data-act="go" data-to="${i.route}">Open ${esc(OS.views[i.route].title)}</button>` : ''}</div>
         </li>`).join('');
       return `${redFlagBanner(sc)}${termsCard(s)}${sampleBanner(s)}
-      ${head(now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }), 'Command center', `${doneN} of ${items.length} protocol actions done · readiness ${sc.readiness}`)}
+      ${head(now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }), 'Command center', `${doneN} of ${items.length} protocol actions done · ${sc.readiness == null ? 'connect a ring or strap for readiness' : 'readiness ' + sc.readiness}`)}
       ${commandStage(s, sc, items, done, setsDone)}
       ${OS.Scan ? OS.Scan.insight(s, sc, systemsOf(s, sc)) : ''}
       <div class="grid g-3">
         <section class="card">
           <div class="card-h"><h2>Your body, scored</h2><button class="link small" data-act="go" data-to="biology">Biology</button></div>
-          <div class="score-body"><div class="score-ring">${ring(sc.mk, 148, 10, 'MK Score')}<div class="score-num"><b class="num">${sc.mk}</b><span>MK Score</span></div></div>
+          <div class="score-body"><div class="score-ring">${ring(sc.mk, 148, 10, 'MK Score')}<div class="score-num"><b class="num">${D(sc.mk)}</b><span>${sc.mk == null ? 'Add data' : 'MK Score'}</span></div></div>
           <div class="sbars">${bars}</div></div>
         </section>
         <section class="card">
-          <div class="card-h"><h2>Readiness</h2>${pill(sc.readiness >= 75 ? 'good' : sc.readiness >= 60 ? 'warn' : 'bad', sc.readiness >= 75 ? 'Primed' : sc.readiness >= 60 ? 'Moderate' : 'Recover')}</div>
-          <div class="big num">${sc.readiness}<small>/100</small></div>
+          <div class="card-h"><h2>Readiness</h2>${sc.readiness == null ? pill('muted', 'No data yet') : pill(sc.readiness >= 75 ? 'good' : sc.readiness >= 60 ? 'warn' : 'bad', sc.readiness >= 75 ? 'Primed' : sc.readiness >= 60 ? 'Moderate' : 'Recover')}</div>
+          <div class="big num">${D(sc.readiness)}<small>/100</small></div>
           <div class="kv3">
-            <div><span>HRV</span><b class="num">${vt.hrv} ms</b><em class="${vt.hrv >= vt.hrvBase ? 'up' : 'down'}">${vt.hrv >= vt.hrvBase ? '+' : ''}${vt.hrv - vt.hrvBase} vs base</em></div>
-            <div><span>Resting HR</span><b class="num">${vt.rhr} bpm</b><em class="${vt.rhr <= vt.rhrBase ? 'up' : 'down'}">${vt.rhr - vt.rhrBase} vs base</em></div>
-            <div><span>Sleep</span><b class="num">${vt.sleepH} h</b><em>score ${vt.sleepScore}</em></div>
+            <div><span>HRV</span><b class="num">${D(vt.hrv)} ms</b><em class="${vt.hrv >= vt.hrvBase ? 'up' : 'down'}">${vs(vt.hrv, vt.hrvBase)}</em></div>
+            <div><span>Resting HR</span><b class="num">${D(vt.rhr)} bpm</b><em class="${vt.rhr <= vt.rhrBase ? 'up' : 'down'}">${vs(vt.rhr, vt.rhrBase)}</em></div>
+            <div><span>Sleep</span><b class="num">${D(vt.sleepH)} h</b><em>${vt.sleepScore == null ? '' : 'score ' + vt.sleepScore}</em></div>
           </div>
           <div class="spark-row"><span class="muted small">HRV, 7 days</span>${spark(vt.hrvTrend, 160, 34)}</div>
         </section>
@@ -88,7 +106,7 @@
           <div class="card-h"><h2>Right now</h2><button class="link small" data-act="go" data-to="life">Open day plan</button></div>
           ${cur ? `<div class="now-block">${catChip(cur.cat)}<p class="now-title">${esc(cur.title)}</p><p class="muted num">${cur.t} · ${cur.dur} min</p></div>` : `<p class="muted">Nothing scheduled this minute.</p>`}
           ${next ? `<div class="next-block"><span class="eyebrow">Next · ${next.t}</span><p>${esc(next.title)}</p></div>` : ''}
-          <div class="mini-prog"><span>Session</span><span class="sbar-track"><span style="width:${(setsDone / setsAll.length * 100).toFixed(0)}%"></span></span><b class="num">${setsDone}/${setsAll.length} sets</b></div>
+          <div class="mini-prog"><span>Session</span><span class="sbar-track"><span style="width:${setsAll.length ? (setsDone / setsAll.length * 100).toFixed(0) : 0}%"></span></span><b class="num">${setsDone}/${setsAll.length} sets</b></div>
         </section>
       </div>
 
@@ -133,11 +151,11 @@
     const water = s.nutrition.water[today] || 0, wf = clamp(water / tg.water, 0, 1);
     const P = sc.parts;
     const parts = [['B', 'Biology', P.biology], ['R', 'Recovery', P.recovery], ['T', 'Training', P.training], ['N', 'Nutrition', P.nutrition], ['L', 'Life', P.life]];
-    const tr = vt.hrvTrend, tmax = Math.max(...tr), tmin = Math.min(...tr) * 0.8;
-    const hrvBars = tr.map((v, i) => `<i style="height:${(((v - tmin) / (tmax - tmin)) * 100).toFixed(0)}%" class="${i === tr.length - 1 ? 'on' : ''}"></i>`).join('');
+    const tr = (vt.hrvTrend || []).filter((v) => v != null), tmax = Math.max(...tr), tmin = Math.min(...tr) * 0.8;
+    const hrvBars = tr.map((v, i) => `<i style="height:${tmax > tmin ? (((v - tmin) / (tmax - tmin)) * 100).toFixed(0) : 50}%" class="${i === tr.length - 1 ? 'on' : ''}"></i>`).join('');
     const wpts = [0.04, 0.16, 0.22, 0.4, 0.5, 0.74, 1].map((f, i) => [i * 30, 46 - (f * wf * 40 + 3)]);
     const wline = smoothPath(wpts);
-    const active = Math.round(vt.steps * 0.04 + setsDone * 9);
+    const active = Math.round((vt.steps || 0) * 0.04 + setsDone * 9);
     const supps = items.filter((i) => i.cat === 'supplement').slice(0, 3).map((i) => {
       const m = i.title.match(doseRe), name = m ? m[1] : i.title, dose = m ? m[2] : '';
       return `<li><button class="cc-supp ${done[i.id] ? 'is-done' : ''}" data-act="proto-toggle" data-id="${esc(i.id)}" aria-pressed="${!!done[i.id]}">
@@ -156,15 +174,15 @@
 
       <button class="gc a-score" data-act="go" data-to="biology">
         <span class="gc-h">${icon('biology', 15)} MK Score</span>
-        <span class="gc-bars gc-bars-l">${parts.map(([k, n, v]) => `<i style="height:${v.toFixed(0)}%" title="${n} ${v.toFixed(0)}"><em>${k}</em></i>`).join('')}</span>
-        <span class="gc-v"><b class="num">${sc.mk}</b><small>/100</small></span>
+        <span class="gc-bars gc-bars-l">${parts.map(([k, n, v]) => `<i style="height:${v == null ? 0 : v.toFixed(0)}%" title="${n} ${D(v, 0)}"><em>${k}</em></i>`).join('')}</span>
+        <span class="gc-v"><b class="num">${D(sc.mk)}</b><small>/100</small></span>
       </button>
 
       <div class="gc a-ready">
         <span class="gc-h">${icon('today', 15)} Readiness</span>
         <span class="gc-bars">${hrvBars}</span>
-        <span class="gc-v"><b class="num">${sc.readiness}</b><small>/100</small></span>
-        <span class="gc-f">HRV ${vt.hrv} ms · ${vt.hrv >= vt.hrvBase ? '+' : ''}${vt.hrv - vt.hrvBase} vs base</span>
+        <span class="gc-v"><b class="num">${D(sc.readiness)}</b><small>/100</small></span>
+        <span class="gc-f">${vt.hrv == null ? 'Connect a ring or strap' : `HRV ${vt.hrv} ms ${vs(vt.hrv, vt.hrvBase) ? '· ' + vs(vt.hrv, vt.hrvBase) : ''}`}</span>
       </div>
 
       <div class="gc a-hyd">
@@ -177,8 +195,8 @@
       <div class="gc a-hr">
         <span class="gc-h">${icon('biology', 15)} Resting HR</span>
         ${ecg()}
-        <span class="gc-v"><b class="num">${vt.rhr}</b><small>BPM</small></span>
-        <span class="gc-f">${vt.rhr <= vt.rhrBase ? '' : '+'}${vt.rhr - vt.rhrBase} vs baseline · sleep ${vt.sleepH} h</span>
+        <span class="gc-v"><b class="num">${D(vt.rhr)}</b><small>BPM</small></span>
+        <span class="gc-f">${vt.rhr == null ? 'Connect a ring or strap' : `${vs(vt.rhr, vt.rhrBase).replace(' vs base', ' vs baseline')}${vt.sleepH == null ? '' : ' · sleep ' + vt.sleepH + ' h'}`}</span>
       </div>
 
       <div class="gc gc-dark a-supp">
@@ -202,7 +220,8 @@
     const worst = [...sc.flagged].sort((a, b) => a.e.score - b.e.score)[0];
     const vt = s.vitals;
     const parts = [];
-    if (sc.readiness >= 75) parts.push(`HRV is ${vt.hrv - vt.hrvBase >= 0 ? 'up ' + (vt.hrv - vt.hrvBase) : 'down ' + (vt.hrvBase - vt.hrv)} ms on your baseline and you slept ${vt.sleepH} h, so today is a good day to push load on the APS Shoulder Press.`);
+    if (sc.readiness == null) parts.push(sc.empty ? 'Welcome to Myo. Add your labs, connect a ring or strap, and log a session: your scores and daily plan build from your own data.' : 'Connect a ring or strap so Myo can read your readiness each morning.');
+    else if (sc.readiness >= 75) parts.push(`HRV is ${vt.hrv - vt.hrvBase >= 0 ? 'up ' + (vt.hrv - vt.hrvBase) : 'down ' + (vt.hrvBase - vt.hrv)} ms on your baseline and you slept ${vt.sleepH} h, so today is a good day to push load on the APS Shoulder Press.`);
     else if (sc.readiness >= 60) parts.push(`Readiness is ${sc.readiness}. Keep today's working sets at RPE 7–8 and skip any top set.`);
     else parts.push(`Readiness is ${sc.readiness}. Swap the heavy session for mobility and Zone 2, then retest readiness tomorrow.`);
     if (worst) parts.push(`Your biggest lever in the labs is <b>${esc(worst.m.name)}</b> at ${worst.m.value} ${esc(worst.m.unit)} (optimal ${fmtR(worst.m.optimal)}).`);
@@ -224,22 +243,22 @@
       const systems = [...new Set(s.markers.map((m) => m.system))];
       const bySys = systemsOf(s, sc);
       const optimal = sc.markers.filter((x) => x.e.status === 'good').length, peakN = sc.peak;
-      const due = dayKey(addDays(new Date(s.labsDate + 'T12:00:00'), s.retestDays));
-      const daysLeft = Math.round((new Date(due + 'T12:00:00') - new Date()) / 864e5);
+      const due = s.labsDate ? dayKey(addDays(new Date(s.labsDate + 'T12:00:00'), s.retestDays)) : null;
+      const daysLeft = due ? Math.round((new Date(due + 'T12:00:00') - new Date()) / 864e5) : null;
       const rows = sc.markers.filter((x) => sysFilter === 'All' || x.m.system === sysFilter).map(({ m, e }) => `
         <tr>
           <td><b>${esc(m.name)}</b><span class="muted small block">${esc(m.system)}</span></td>
           <td class="num">${editId === m.id
-            ? `<form data-submit="marker-save" data-id="${m.id}" class="inline-edit"><label class="sr" for="mv-${m.id}">New value</label><input id="mv-${m.id}" name="v" type="number" step="any" value="${m.value}" autofocus><button class="btn sm">Save</button></form>`
-            : `<button class="valbtn" data-act="marker-edit" data-id="${m.id}" title="Edit value"><b>${m.value}</b> <span class="muted">${esc(m.unit)}</span></button>`}</td>
+            ? `<form data-submit="marker-save" data-id="${m.id}" class="inline-edit"><label class="sr" for="mv-${m.id}">New value</label><input id="mv-${m.id}" name="v" type="number" step="any" value="${m.value ?? ''}" autofocus><button class="btn sm">Save</button></form>`
+            : `<button class="valbtn" data-act="marker-edit" data-id="${m.id}" title="Edit value"><b>${D(m.value)}</b> <span class="muted">${esc(m.unit)}</span></button>`}</td>
           <td class="rcell">${rangeBar(m)}<span class="muted small">optimal ${fmtR(m.optimal)}</span></td>
           <td>${pill(e.tier === 'peak' ? 'peak' : e.status, e.label)}</td>
           <td class="tcell">${spark(m.history.map((h) => h[1]), 90, 26, { color: e.status === 'good' ? 'var(--good)' : e.status === 'warn' ? 'var(--warn)' : 'var(--bad)' })}</td>
         </tr>`).join('');
       const wear = [['oura', 'Oura Ring', 'Sleep, HRV, temperature'], ['whoop', 'WHOOP', 'Strain, recovery, HRV'], ['apple', 'Apple Health', 'Steps, workouts, HR'], ['garmin', 'Garmin Connect', 'Training load, VO2max']];
       return `${sampleBanner(s)}
-      ${redFlagBanner(sc)}${head('Biology layer · labs → score → protocol → retest', 'Biomarkers', `${s.markers.length} markers across ${systems.length} systems · last labs ${fmtDate(s.labsDate)}`,
-        `<div class="hstat"><span>Biology score</span><b class="num">${sc.parts.biology.toFixed(0)}</b></div><div class="hstat"><span>At peak</span><b class="num">${peakN}/${s.markers.length}</b></div><div class="hstat"><span>Optimal+</span><b class="num">${optimal}/${s.markers.length}</b></div><div class="hstat"><span>Retest</span><b class="num">${daysLeft > 0 ? daysLeft + ' d' : 'Due'}</b></div>`)}
+      ${redFlagBanner(sc)}${head('Biology layer · labs → score → protocol → retest', 'Biomarkers', `${s.markers.length} markers across ${systems.length} systems · ${s.labsDate ? 'last labs ' + fmtDate(s.labsDate) : 'no labs yet: import a PDF or CSV below'}`,
+        `<div class="hstat"><span>Biology score</span><b class="num">${D(sc.parts.biology, 0)}</b></div><div class="hstat"><span>At peak</span><b class="num">${peakN}/${s.markers.length}</b></div><div class="hstat"><span>Optimal+</span><b class="num">${optimal}/${s.markers.length}</b></div><div class="hstat"><span>Retest</span><b class="num">${daysLeft == null ? '—' : daysLeft > 0 ? daysLeft + ' d' : 'Due'}</b></div>`)}
       <div class="grid g-body">
         <section class="card holo body-card" aria-label="3D body">
           ${OS.Anatomy ? '<div class="a3d" data-a3d="compact" data-systems="skin,cardiovascular,digestive,urinary,endocrine"></div>' : OS.anatomy.bodyMap(bySys, sysFilter === 'All' ? null : sysFilter)}
@@ -253,9 +272,9 @@
           ${(() => {
             const cur = bySys.find((x) => x.sy === sysFilter);
             const list = cur ? cur.xs : [...sc.flagged].sort((a, b) => a.e.score - b.e.score).slice(0, 5);
-            return `<div class="sys-head"><div><span class="eyebrow">${cur ? 'System' : 'Biggest levers'}</span><h2 class="sys-name">${esc(cur ? cur.sy : 'Across all systems')}</h2></div>${cur ? pill(cur.status, cur.status === 'good' ? 'Optimal' : cur.status === 'warn' ? 'Near optimal' : 'Needs work') : ''}<b class="num sys-score">${(cur ? cur.score : sc.parts.biology).toFixed(0)}</b></div>
+            return `<div class="sys-head"><div><span class="eyebrow">${cur ? 'System' : 'Biggest levers'}</span><h2 class="sys-name">${esc(cur ? cur.sy : 'Across all systems')}</h2></div>${cur ? pill(cur.status, cur.status === 'good' ? 'Optimal' : cur.status === 'warn' ? 'Near optimal' : 'Needs work') : ''}<b class="num sys-score">${D(cur ? cur.score : sc.parts.biology, 0)}</b></div>
             <ul class="sys-list">${list.map(({ m, e }) => `<li><div class="sys-li-h"><b>${esc(m.name)}</b>${pill(e.tier === 'peak' ? 'peak' : e.status, e.label)}</div>
-              <div class="sys-kv"><span><em>Where you stand</em><b class="num">${m.value} <small>${esc(m.unit)}</small></b></span><span><em>Optimal range</em><b class="num">${fmtR(m.optimal)} <small>${esc(m.unit)}</small></b></span></div>${rangeBar(m)}</li>`).join('') || '<li class="muted">Every marker in range.</li>'}</ul>`;
+              <div class="sys-kv"><span><em>Where you stand</em><b class="num">${D(m.value)} <small>${esc(m.unit)}</small></b></span><span><em>Optimal range</em><b class="num">${fmtR(m.optimal)} <small>${esc(m.unit)}</small></b></span></div>${rangeBar(m)}</li>`).join('') || `<li class="muted">${sc.markers.some((x) => x.e.score != null) ? 'Every marker in range.' : 'No lab results yet. Import them below.'}</li>`}</ul>`;
           })()}
         </section>
       </div>
@@ -346,7 +365,7 @@
         if (!m) { miss.push(parts[0]); return; }
         m.value = val; m.history.push([date, val]); m.history.sort((a, b) => a[0].localeCompare(b[0])); hits.push(m.name);
       });
-      if (hits.length) { s.labsDate = date > s.labsDate ? date : s.labsDate; s.sample = false; s.labsImported = date; }
+      if (hits.length) { s.labsDate = !s.labsDate || date > s.labsDate ? date : s.labsDate; s.fresh = false; s.sample = false; s.labsImported = date; }
     });
     OS.toast(hits.length ? `Imported ${hits.length} marker${hits.length > 1 ? 's' : ''}${miss.length ? `. Not matched: ${miss.slice(0, 3).join(', ')}` : ''}.` : 'No markers matched. Use one "name, value" per line.');
   });
@@ -364,7 +383,7 @@
       const done = s.protocolDone[k] || {};
       const presets = [['Whey shake', 140, 25, 4, 2], ['Chicken breast 6 oz', 280, 52, 0, 6], ['Rice, 1 cup', 205, 4, 45, 0], ['Eggs ×3', 215, 18, 1, 15], ['Greek yogurt', 150, 20, 8, 4], ['Banana', 105, 1, 27, 0]];
       const week = [-6, -5, -4, -3, -2, -1, 0].map((d) => { const ms = s.nutrition.meals[dayKey(addDays(new Date(), d))] || []; return ms.reduce((a, m) => a + m.p, 0); });
-      return `${head('Nutrition · hydration · supplements', 'Fuel', `Targets for ${s.profile.weightKg} kg, goal: ${esc({ cut: 'fat loss', recomp: 'recomposition', gain: 'muscle gain' }[s.profile.goal])}`, `<div class="hstat"><span>Nutrition score</span><b class="num">${sc.parts.nutrition.toFixed(0)}</b></div>`)}
+      return `${head('Nutrition · hydration · supplements', 'Fuel', `Targets for ${s.profile.weightKg} kg, goal: ${esc({ cut: 'fat loss', recomp: 'recomposition', gain: 'muscle gain' }[s.profile.goal])}`, `<div class="hstat"><span>Nutrition score</span><b class="num">${D(sc.parts.nutrition, 0)}</b></div>`)}
       <div class="grid g-2-1">
         <section class="card">
           <div class="card-h"><h2>Today</h2><span class="num muted">${fmt(sum.kcal)} / ${fmt(tg.kcal)} kcal</span></div>
@@ -416,7 +435,7 @@
       const streak = (h) => { let n = 0; for (let i = 0; i < 365; i++) { if (h.log[dayKey(addDays(new Date(), -i))]) n++; else if (i > 0) break; } return n; };
       const mood = s.life.mood[k] || {};
       const scale = (key, label, val) => `<div class="scale"><span>${label}</span><div class="seg" role="group" aria-label="${label}">${[1, 2, 3, 4, 5].map((n) => `<button class="${val === n ? 'on' : ''}" data-act="mood" data-k="${key}" data-v="${n}" aria-pressed="${val === n}">${n}</button>`).join('')}</div></div>`;
-      return `${head('Schedule · habits · goals · mind', 'Life', 'Your day, built around training and recovery', `<div class="hstat"><span>Life score</span><b class="num">${sc.parts.life.toFixed(0)}</b></div>`)}
+      return `${head('Schedule · habits · goals · mind', 'Life', 'Your day, built around training and recovery', `<div class="hstat"><span>Life score</span><b class="num">${D(sc.parts.life, 0)}</b></div>`)}
       <div class="grid g-2-1">
         <section class="card">
           <div class="card-h"><h2>Day plan</h2><span class="muted small">${blocks.length} blocks</span></div>
@@ -500,8 +519,9 @@
           <div class="card-h"><h2>Your data</h2></div>
           <p class="fine"><b>Terms.</b> ${esc(OS.TERMS)}</p>
           <p>${mode === 'cloud' ? 'Synced to your Myo account. Only you can read your row, on any device where you sign in.' : mode === 'account' ? 'Saved privately to your Claude account. Only you can read it, on any device.' : mode === 'device' ? 'Saved in this browser only. Open the app in Claude while signed in to sync it to your account.' : 'Storage is unavailable in this view. Changes last until you close the page.'}</p>
-          <div class="row"><button class="btn ghost" data-act="reset-ask">Reset to sample data</button></div>
-          <div id="reset-confirm" hidden class="confirm"><p>This replaces everything you've logged with the sample member. You can't undo it.</p><div class="row"><button class="btn danger" data-act="reset">Replace my data</button><button class="btn ghost" data-act="reset-cancel">Keep my data</button></div></div>
+          ${s.sample ? (freshAsk ? freshConfirm() : '<div class="row"><button class="btn" data-act="fresh-ask">Start with my own data</button></div>') : ''}
+          <div class="row"><button class="btn ghost" data-act="reset-ask">${s.sample ? 'Reset the sample' : 'Reset to sample data'}</button></div>
+          <div id="reset-confirm" hidden class="confirm"><p>This replaces everything you've logged with the sample member${OS.auth && OS.auth.user ? ', on this device and in your Myo account' : ''}. You can't undo it.</p><div class="row"><button class="btn danger" data-act="reset">Replace my data</button><button class="btn ghost" data-act="reset-cancel">Keep my data</button></div></div>
         </section>
       </div>`;
     }

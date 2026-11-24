@@ -58,8 +58,8 @@
     const load = OS.trainLoad ? OS.trainLoad() : {}, lifted = Object.values(load).some((v) => v.done > 0.3);
     const safe = !flagged(R), items = [];
     let mode, why;
-    if (rd < 60 || hrvLow) {
-      mode = 'Downshift day'; why = `Readiness ${rd}${hrvLow ? ` and HRV ${vt.hrv} ms below your ${vt.hrvBase} ms base` : ''}: calm the nervous system, skip cold stress.`;
+    if ((rd != null && rd < 60) || hrvLow) {
+      mode = 'Downshift day'; why = `${rd == null ? 'HRV' : 'Readiness ' + rd}${hrvLow ? ` and HRV ${vt.hrv} ms below your ${vt.hrvBase} ms base` : ''}: calm the nervous system, skip cold stress.`;
       items.push(['sound', 'Sonosphere · Downshift', '10 min, early evening', 'downshift']);
       if (safe) items.push(['bath', 'Warm bath', '15 min at 40 °C, 90 min before bed']);
       items.push(['redlight', 'Red light', '10 min on tight areas']);
@@ -69,7 +69,7 @@
       items.push(['redlight', 'Red light', '10–15 min on the muscles you trained']);
       items.push(['sound', 'Sonosphere · Deep sleep', '20 min in bed', 'sleep']);
     } else {
-      mode = 'Balanced day'; why = `Readiness ${rd}: a cold start for alertness, heat later for sleep.`;
+      mode = 'Balanced day'; why = `${rd == null ? 'No readiness data yet' : 'Readiness ' + rd}: a cold start for alertness, heat later for sleep.`;
       if (safe) items.push(['plunge', 'Cold plunge', '2–3 min at 10–15 °C, morning']);
       if (safe) items.push(['sauna', 'Sauna', '15 min in the evening']);
       items.push(['sound', 'Sonosphere · Singing bowls', '12 min', 'bowls']);
@@ -188,7 +188,7 @@
           <details><summary>How and safety</summary><p class="small">${esc(m.how)}</p><p class="small rc-safe">${icon('biology', 13)} ${esc(m.safety)}</p></details>
           ${m.grade !== 'D' ? `<div class="row"><button class="btn ghost sm" data-act="rc-log" data-k="${m.k}">Log session</button><button class="link small" data-act="rc-add" data-k="${m.k}">Add to today</button></div>` : '<p class="fine">Myo does not schedule this. Ask a clinician if you have a medical reason.</p>'}</article>`;
       return `${OS.ui.head('Body · recovery protocols', 'Recovery', 'Sound, heat, cold and light, dosed to your readiness and today\'s training.',
-        `<div class="hstat"><span>Readiness</span><b class="num">${sc.readiness}</b></div><div class="hstat"><span>Heat this week</span><b class="num">${wk.heat} min</b></div><div class="hstat"><span>Cold this week</span><b class="num">${wk.cold} min</b></div>`)}
+        `<div class="hstat"><span>Readiness</span><b class="num">${OS.dash(sc.readiness)}</b></div><div class="hstat"><span>Heat this week</span><b class="num">${wk.heat} min</b></div><div class="hstat"><span>Cold this week</span><b class="num">${wk.cold} min</b></div>`)}
       ${flag ? '<div class="banner warn" role="note"><strong>Heat and cold are off your plan.</strong> You ticked a health condition below. Talk to your doctor before sauna, cold plunges or cryotherapy; sound, breathing and light remain.</div>' : ''}
       <div class="grid g-2-1">
         <section class="card rc-rx"><div class="card-h"><h2>Today: ${esc(rx.mode)}</h2><span class="muted small">From readiness, HRV and today's training</span></div>
