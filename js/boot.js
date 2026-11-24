@@ -1,0 +1,95 @@
+/* ═══ MYOKINETICS OS v4 — BOOT: shell, nav, delegation, capabilities, persistence ═══ */
+(function () {
+  'use strict';
+  const { icon, esc } = OS;
+  // navigation: groups for the top pill bar (menus on desktop), four tabs + a menu sheet on phones
+  const GROUPS = [
+    { k: 'intro', label: 'Intro', items: ['welcome'] },
+    { k: 'today', label: 'Today', items: ['today'] },
+    { k: 'body', label: 'Body', items: ['body', 'biology', 'sleep', 'looks', 'recovery', 'pt', 'imaging', 'mirror', 'function', 'longevity', 'wearables'] },
+    { k: 'training', label: 'Training', items: ['training', 'athlete', 'ar', 'machines', 'gym'] },
+    { k: 'coach', label: 'Coach', items: ['coach'] },
+    { k: 'life', label: 'Life', items: ['fuel', 'life', 'enhance'] },
+    { k: 'more', label: 'More', items: ['connect', 'augment', 'system'] }
+  ];
+  const DESC = { connect: 'MedTech devices, Bluetooth and the Ingest API', looks: 'Physique, skin, face and procedures build', sleep: '14-night study, sleep reports and recordings', recovery: 'Sonosphere sound, heat, cold, red light', pt: 'Rehab plans with pain monitoring', body: 'Real 3D anatomy, every system', biology: 'Biomarkers against optimal ranges', imaging: 'CT, MRI and DEXA viewer', mirror: 'Live x-ray of head and hands', function: 'Movement, cognition and mood tests', longevity: 'Biological age and healthspan plan', wearables: 'Oura and WHOOP sync', training: "Today's session and program", athlete: 'Build toward an athlete type', ar: 'Form coaching on camera', machines: 'APS, ISO Flow and connected gear', gym: 'Plan a facility', fuel: 'Meals, protein and water', life: 'Habits, schedule and goals', enhance: 'Supplements, graded by evidence', augment: 'Ascend tiers and devices', system: 'How Myo is built and MVP status', welcome: 'Introduction and setup' };
+  const TABS = ['today', 'body', 'coach', 'training'];
+  const chev = '<svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>';
+  const groups = () => GROUPS.map((g) => ({ ...g, items: g.items.filter((n) => OS.views[n]) })).filter((g) => g.items.length);
+  OS.navGroups = groups;
+  OS.caps = { sample: null, downloads: null, tts: null, dictation: null };
+  // state: device copy first so the first frame is real, then the account copy when it answers
+  const local = OS.Persist.loadLocal();
+  OS.state = local && local.v === 4 ? local : OS.seed();
+
+  function closeMenus(except) { document.querySelectorAll('.tn-i[aria-expanded="true"]').forEach((b) => { if (b !== except) { b.setAttribute('aria-expanded', 'false'); const m = document.getElementById(b.getAttribute('aria-controls')); if (m) m.hidden = true; } }); }
+  function buildNav() {
+    const top = document.getElementById('topnav'), tab = document.getElementById('tabbar');
+    top.innerHTML = groups().map((g) => g.items.length === 1
+      ? `<a class="tn-i" href="#${g.items[0]}" data-group="${g.k}" data-route="${g.items[0]}">${g.label}</a>`
+      : `<button type="button" class="tn-i" data-group="${g.k}" aria-expanded="false" aria-controls="tn-${g.k}">${g.label}${chev}</button><div class="tn-menu" id="tn-${g.k}" hidden>${g.items.map((n) => `<a href="#${n}" data-route="${n}"><span>${icon(OS.views[n].icon, 18)}</span><b>${esc(OS.views[n].title)}</b><small>${esc(DESC[n] || '')}</small></a>`).join('')}</div>`).join('');
+    tab.innerHTML = TABS.filter((n) => OS.views[n]).map((n) => `<a href="#${n}" data-route="${n}">${icon(OS.views[n].icon, 20)}<span>${esc(OS.views[n].title)}</span></a>`).join('') + `<button type="button" data-act="nav-sheet" aria-haspopup="dialog">${icon('system', 20)}<span>Menu</span></button>`;
+    top.addEventListener('click', (e) => {
+      const b = e.target.closest('button.tn-i'); if (b) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b); b.setAttribute('aria-expanded', String(open)); document.getElementById(b.getAttribute('aria-controls')).hidden = !open; return; }
+      if (e.target.closest('a')) closeMenus();
+    });
+    document.addEventListener('click', (e) => { if (!e.target.closest('#topnav')) closeMenus(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeMenus(); const sh = document.getElementById('sheet'); if (sh && !sh.hidden) sh.hidden = true; } });
+  }
+  OS.act('nav-sheet', () => {
+    const sh = document.getElementById('sheet'), cur = OS.current;
+    sh.innerHTML = `<div class="sheet-in" role="dialog" aria-label="All of Myo"><span class="sheet-grip"></span>${groups().map((g) => `<section><h3>${g.label}</h3><div class="sheet-grid">${g.items.map((n) => `<a href="#${n}" ${n === cur ? 'aria-current="page"' : ''}><span>${icon(OS.views[n].icon, 18)}</span>${esc(OS.views[n].title)}</a>`).join('')}</div></section>`).join('')}</div>`;
+    sh.hidden = false;
+  });
+  document.addEventListener('click', (e) => { const sh = document.getElementById('sheet'); if (sh && !sh.hidden && (e.target === sh || e.target.closest('.sheet a'))) sh.hidden = true; });
+  function header() {
+    const sc = OS.scores(OS.state);
+    document.getElementById('hdr-score').textContent = sc.mk;
+    document.getElementById('hdr-ready').textContent = sc.readiness;
+    const u = OS.auth && OS.auth.user, av = document.getElementById('avatar');
+    av.textContent = u ? OS.auth.initials() : (OS.state.profile.initials || 'MK');
+    av.dataset.auth = u ? 'in' : 'out';
+    av.title = u ? `Signed in as ${u.email || 'member'}` : 'Profile and sign-in';
+    const mode = OS.Persist.mode;
+    document.getElementById('save-state').textContent = mode === 'cloud' ? 'Synced to your Myo account' : mode === 'account' ? 'Synced to your account' : mode === 'device' ? 'Saved on this device' : 'Not saved';
+  }
+  OS.on('header', header);
+  OS.on('saved', header);
+  OS.on('route', (name) => {
+    document.querySelectorAll('#topnav [data-route], #tabbar [data-route]').forEach((a) => a.setAttribute('aria-current', a.dataset.route === name ? 'page' : 'false'));
+    const g = groups().find((x) => x.items.includes(name));
+    document.querySelectorAll('#topnav .tn-i[data-group]').forEach((b) => b.classList.toggle('on', !!g && b.dataset.group === g.k));
+    const mb = document.querySelector('#tabbar [data-act="nav-sheet"]'); if (mb) mb.setAttribute('aria-current', TABS.includes(name) ? 'false' : 'page');
+    closeMenus();
+  });
+
+  // event delegation: data-act (click), data-change (change), data-submit (forms)
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-act]');
+    if (!el || el.tagName === 'FORM') return;
+    const fn = OS.acts[el.dataset.act];
+    if (fn) { e.preventDefault(); fn(el, e); }
+  });
+  document.addEventListener('change', (e) => { const el = e.target.closest('[data-change]'); if (el && OS.changes[el.dataset.change]) OS.changes[el.dataset.change](el, e); });
+  document.addEventListener('submit', (e) => { const f = e.target.closest('form[data-submit]'); if (!f) return; e.preventDefault(); const fn = OS.acts[f.dataset.submit]; if (fn) fn(f, e); });
+  window.addEventListener('hashchange', () => OS.render());
+
+  buildNav();
+  // first open: introduce Myo before anything else
+  if (!location.hash && !OS.state.welcomed) location.hash = 'welcome';
+  OS.render();
+  if (OS.Avatar) OS.Avatar.mount(document.getElementById('orb-cv'), { small: true });
+  if (OS.Avatar) OS.Avatar.on((st) => { const o = document.getElementById('orb'); if (o) { o.dataset.st = st; o.title = 'Myo · ' + OS.Avatar.label(st); } });
+
+  // capabilities light up when the viewer answers; the app works without them
+  if (window.claude && window.claude.use) {
+    window.claude.use('sample').then((s) => { OS.caps.sample = s; if (OS.current === 'coach') OS.render(); }).catch(() => {});
+    window.claude.use('downloads').then((d) => { OS.caps.downloads = d; }).catch(() => {});
+    window.claude.use('tts').then((t) => { if (!t) return; OS.caps.tts = t; if (OS.Avatar) t.onState(({ state }) => { if (state === 'speaking') OS.Avatar.set('speaking'); else if (OS.Avatar.state === 'speaking') OS.Avatar.set('idle'); }); if (OS.current === 'coach') OS.render(); }).catch(() => {});
+    window.claude.use('dictation').then((d) => { if (!d) return; OS.caps.dictation = d; if (OS.Avatar) OS.Avatar.wireDictation(d); if (OS.current === 'coach') OS.render(); }).catch(() => {});
+  }
+  OS.Persist.connect().then((remote) => {
+    if (remote && remote.v === 4) { OS.state = remote; OS.render(); }
+    header();
+  });
+})();

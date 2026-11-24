@@ -1,0 +1,5 @@
+Anatomy meshes in this folder are derived from BodyParts3D.
+BodyParts3D, (c) The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan.
+https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html
+Changes: parts grouped by body system, simplified by vertex clustering, positions quantised to 16 bits, re-encoded as base64 text.
+These derived meshes are shared under the same licence (CC BY-SA 2.1 JP).

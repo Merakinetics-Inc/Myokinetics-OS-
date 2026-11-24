@@ -1,0 +1,398 @@
+/* ═══════════════════════════════════════════════════════════════════
+   MYOKINETICS OS v4 — CORE
+   State store · persistence adapter · score engine · protocol engine
+   · router · DOM helpers. Every view module registers into OS.views.
+   ═══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* ── helpers ─────────────────────────────────────────────────────── */
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const dayKey = (d = new Date()) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const fmtDate = (k) => new Date(k + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const fmt = (n, d = 0) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d });
+
+  function spark(vals, w = 120, h = 32, opts = {}) {
+    if (!vals.length) return '';
+    const min = opts.min ?? Math.min(...vals), max = opts.max ?? Math.max(...vals);
+    const span = max - min || 1, pad = 3;
+    const pts = vals.map((v, i) => [pad + (i * (w - pad * 2)) / Math.max(1, vals.length - 1), h - pad - ((v - min) / span) * (h - pad * 2)]);
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const area = line + ` L${pts[pts.length - 1][0].toFixed(1)} ${h} L${pts[0][0].toFixed(1)} ${h} Z`;
+    const last = pts[pts.length - 1];
+    const col = opts.color || 'var(--accent)';
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">
+      <path d="${area}" fill="${col}" opacity=".12"/>
+      <path d="${line}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.6" fill="${col}"/></svg>`;
+  }
+
+  function ring(value, size = 120, stroke = 9, label = '') {
+    const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - clamp(value, 0, 100) / 100);
+    return `<svg class="ring" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="${esc(label)} ${Math.round(value)} of 100">
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${stroke}"/>
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--accent)" stroke-width="${stroke}" stroke-linecap="round"
+        stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 ${size / 2} ${size / 2})"/></svg>`;
+  }
+
+  const pill = (status, text) => `<span class="pill pill-${status}">${esc(text)}</span>`;
+
+  /* ── icons (24px stroke) ─────────────────────────────────────────── */
+  const ICONS = {
+    today: '<circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/>',
+    biology: '<path d="M7 3c0 6 10 6 10 12s-10 6-10 6"/><path d="M17 3c0 6-10 6-10 12"/><path d="M8.5 7h7M8.5 17h7"/>',
+    training: '<path d="M3 10v4M6 7v10M18 7v10M21 10v4M6 12h12"/>',
+    machines: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M12 15v3"/>',
+    ar: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="9" r="2"/><path d="M12 11v4M9 13l3-1 3 1M10 19l2-4 2 4"/>',
+    gym: '<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 12h7v9M14 3v6h7"/>',
+    fuel: '<path d="M12 21c-4 0-7-3-7-7 0-5 7-11 7-11s7 6 7 11c0 4-3 7-7 7z"/>',
+    life: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    coach: '<path d="M4 5h16v11H9l-5 4z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/>',
+    system: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8.5" y="14" width="7" height="7"/><path d="M6.5 10v2h11v-2M12 12v2"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    check: '<path d="M5 12l5 5 9-10"/>',
+    rotate: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',
+    upload: '<path d="M12 16V4M7 9l5-5 5 5M5 20h14"/>',
+    download: '<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',
+    send: '<path d="M4 12l16-8-6 16-2-7z"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    play: '<path d="M7 5l12 7-12 7z"/>',
+    pause: '<path d="M8 5v14M16 5v14"/>',
+    athlete: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 21h6M10 17h4"/>',
+    wearable: '<rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2.5l1.5 1"/>',
+    imaging: '<rect x="3" y="3" width="18" height="18" rx="3"/><ellipse cx="12" cy="12" rx="5" ry="7"/><path d="M12 5v14M7.5 9.5h9M7.5 14.5h9"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+    speaker: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/>',
+    mirror: '<rect x="5" y="2" width="14" height="20" rx="3"/><circle cx="12" cy="7" r="2"/><path d="M12 9v6M9 11.5h6M9 13.5h6M10 19l2-4 2 4"/>',
+    function: '<path d="M3 12h4l2-6 4 12 2-6h6"/>',
+    augment: '<rect x="7" y="7" width="10" height="10" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/>',
+    longevity: '<path d="M6 3h12M6 21h12"/><path d="M7 3v2a5 5 0 0 0 10 0V3M7 21v-2a5 5 0 0 1 10 0v2"/>',
+    stack: '<path d="M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7z"/><path d="M7 7l7 7"/>',
+    body: '<circle cx="12" cy="4.2" r="2.1"/><path d="M12 6.6v7.2M7.5 9.2c1.6.8 3 1.2 4.5 1.2s2.9-.4 4.5-1.2M9.6 21l2.4-7.2 2.4 7.2"/>',
+    home: '<path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5M10 20v-5h4v5"/>',
+    recovery: '<path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/>',
+    looks: '<path d="M12 3l2.2 5.6L20 11l-5.8 2.4L12 19l-2.2-5.6L4 11l5.8-2.4z"/><path d="M19 3v4M17 5h4"/>',
+    alert: '<path d="M12 4L2.5 20h19z"/><path d="M12 10v4.5M12 17.2v.3"/>',
+    sleep: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/><path d="M16 3h3l-3 4h3"/>',
+    pt: '<path d="M7 3v6a5 5 0 0 0 10 0V3M12 14v7M9 21h6"/><circle cx="12" cy="9" r="1.5"/>',
+    palette: '<path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.7 1.6-1.6 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.4-9-7.4z"/><circle cx="7.5" cy="11" r="1.1"/><circle cx="10.2" cy="7.3" r="1.1"/><circle cx="14.6" cy="7.3" r="1.1"/><circle cx="17" cy="11" r="1.1"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'
+  };
+  const icon = (n, s = 20) => `<svg class="ico" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
+  /* ── seed data (sample member, clearly labelled in UI) ───────────── */
+  function seed() {
+    const t = new Date();
+    const k = (n) => dayKey(addDays(t, n));
+    const M = (id, name, system, unit, value, normal, optimal, weight, prev, aliases = []) => ({
+      id, name, system, unit, value, normal, optimal, weight, aliases,
+      history: [[k(-270), prev[0]], [k(-180), prev[1]], [k(-39), value]]
+    });
+    const markers = [
+      M('apob', 'ApoB', 'Cardiometabolic', 'mg/dL', 92, [null, 130], [null, 80], 3, [104, 98], ['apolipoprotein b']),
+      M('ldl', 'LDL-C', 'Cardiometabolic', 'mg/dL', 118, [null, 130], [null, 100], 2, [131, 124], ['ldl', 'ldl cholesterol']),
+      M('hdl', 'HDL-C', 'Cardiometabolic', 'mg/dL', 52, [40, null], [55, null], 2, [47, 50], ['hdl', 'hdl cholesterol']),
+      M('tg', 'Triglycerides', 'Cardiometabolic', 'mg/dL', 104, [null, 150], [null, 90], 2, [142, 121], ['trig']),
+      M('lpa', 'Lp(a)', 'Cardiometabolic', 'nmol/L', 18, [null, 75], [null, 30], 1, [19, 18], ['lipoprotein a']),
+      M('a1c', 'HbA1c', 'Metabolic', '%', 5.4, [null, 5.7], [4.6, 5.3], 3, [5.6, 5.5], ['hemoglobin a1c', 'a1c']),
+      M('glu', 'Fasting glucose', 'Metabolic', 'mg/dL', 91, [70, 99], [75, 90], 2, [97, 94], ['glucose']),
+      M('ins', 'Fasting insulin', 'Metabolic', 'µIU/mL', 8.1, [2.6, 24.9], [2, 6], 2, [11.4, 9.6], ['insulin']),
+      M('crp', 'hs-CRP', 'Inflammation', 'mg/L', 1.3, [null, 3], [null, 1], 3, [2.4, 1.8], ['crp', 'c-reactive protein']),
+      M('hcy', 'Homocysteine', 'Inflammation', 'µmol/L', 9.6, [null, 15], [null, 8], 1, [11.2, 10.1], []),
+      M('tt', 'Total testosterone', 'Hormonal', 'ng/dL', 548, [264, 916], [600, 900], 2, [497, 520], ['testosterone']),
+      M('ft', 'Free testosterone', 'Hormonal', 'ng/dL', 12.1, [8.7, 25.1], [15, 25], 2, [10.4, 11.3], []),
+      M('cort', 'Cortisol (AM)', 'Hormonal', 'µg/dL', 17.2, [6.2, 19.4], [10, 18], 1, [19.1, 18.0], ['cortisol']),
+      M('tsh', 'TSH', 'Thyroid', 'mIU/L', 2.1, [0.45, 4.5], [0.5, 2.5], 2, [2.4, 2.2], []),
+      M('ft3', 'Free T3', 'Thyroid', 'pg/mL', 3.2, [2.0, 4.4], [3.0, 4.0], 1, [3.0, 3.1], ['ft3']),
+      M('vitd', 'Vitamin D (25-OH)', 'Nutrients', 'ng/mL', 31, [30, 100], [40, 60], 3, [22, 26], ['vitamin d', '25-oh vitamin d']),
+      M('ferr', 'Ferritin', 'Nutrients', 'ng/mL', 96, [30, 400], [50, 150], 2, [88, 91], []),
+      M('b12', 'Vitamin B12', 'Nutrients', 'pg/mL', 512, [232, 1245], [500, 1000], 1, [430, 470], ['b12']),
+      M('mg', 'RBC magnesium', 'Nutrients', 'mg/dL', 4.7, [4.2, 6.8], [5.2, 6.5], 2, [4.5, 4.6], ['magnesium']),
+      M('o3', 'Omega-3 index', 'Nutrients', '%', 5.1, [4, null], [8, 12], 2, [4.2, 4.6], ['omega-3', 'omega 3 index']),
+      M('alt', 'ALT', 'Liver & kidney', 'U/L', 26, [0, 44], [null, 25], 1, [31, 28], []),
+      M('egfr', 'eGFR', 'Liver & kidney', 'mL/min', 104, [60, null], [90, null], 1, [101, 103], []),
+      M('hgb', 'Hemoglobin', 'Blood', 'g/dL', 15.1, [13, 17], [14, 16], 1, [14.8, 15.0], []),
+      M('ck', 'Creatine kinase', 'Muscle', 'U/L', 236, [44, 1083], [null, 300], 1, [410, 280], ['ck'])
+    ];
+
+    const ex = (id, name, machine, sets, reps, load, unit, done = 0) => ({
+      id, name, machine, target: { sets, reps, load, unit },
+      sets: Array.from({ length: sets }, (_, i) => ({ w: load, r: i < done ? reps : '', rpe: i < done ? [7, 7.5, 8, 8.5][i] : '', done: i < done }))
+    });
+
+    const meals = {};
+    [[-3, [['Greek yogurt bowl', 520, 42, 58, 12], ['Chicken rice bowl', 760, 58, 88, 18], ['Salmon + potatoes', 820, 52, 70, 32], ['Whey + banana', 310, 30, 38, 4]]],
+     [-2, [['Egg scramble + toast', 610, 38, 46, 28], ['Turkey wrap', 640, 46, 62, 20], ['Steak + rice', 880, 62, 84, 30]]],
+     [-1, [['Oats + whey', 540, 40, 72, 10], ['Poke bowl', 720, 48, 86, 18], ['Chicken pasta', 840, 58, 92, 22], ['Cottage cheese', 220, 28, 10, 6]]],
+     [0, [['Greek yogurt bowl', 520, 42, 58, 12], ['Pre-workout shake', 280, 30, 32, 4]]]]
+      .forEach(([d, arr]) => { meals[k(d)] = arr.map(([name, kcal, p, c, f]) => ({ id: uid(), name, kcal, p, c, f })); });
+
+    const habitLog = (pattern) => { const o = {}; pattern.forEach((v, i) => { if (v) o[k(i - 6)] = true; }); return o; };
+
+    return {
+      v: 4,
+      sample: true,
+      profile: { name: 'Sample Member', initials: 'SM', age: 34, sex: 'M', weightKg: 82, heightCm: 180, goal: 'recomp', activity: 1.55 },
+      markers, labsDate: k(-39), retestDays: 90,
+      wearables: { oura: true, whoop: false, apple: true, garmin: false },
+      vitals: { hrv: 68, hrvBase: 62, rhr: 54, rhrBase: 56, sleepH: 7.4, sleepScore: 86, steps: 8420, hrvTrend: [58, 61, 60, 64, 59, 66, 68] },
+      protocolDone: { [k(0)]: { 'p-vitd': true, 'p-light': true } },
+      customProtocol: [],
+      training: {
+        program: { name: 'Hypertrophy Block A', week: 4, weeks: 8, perWeek: 4, focus: 'Upper push · bilateral balance' },
+        programs: [
+          { name: 'Hypertrophy Block A', detail: 'Upper/lower split, 4 sessions a week. APS Machine + ISO Flow + Dumbbell Hangers.', tag: 'Week 4 of 8' },
+          { name: 'Unilateral Mastery', detail: 'Single-leg progression with bilateral force matching. Rehab and performance.', tag: 'Phase 2' },
+          { name: 'Rotational Power', detail: 'ISO Flow isokinetic rotation work with torque and symmetry tracking.', tag: 'Sport' }
+        ],
+        session: {
+          name: 'Upper Push', date: k(0),
+          exercises: [
+            ex('e1', 'APS Shoulder Press', 'aps', 4, 8, 95, 'lb', 4),
+            ex('e2', 'Incline Dumbbell Press', 'hangers', 4, 10, 40, 'lb', 2),
+            ex('e3', 'ISO Flow Cable Fly', 'isoflow', 3, 12, 35, 'lb'),
+            ex('e4', 'ISO Flow Rotational Press', 'isoflow', 3, 10, 30, 'lb'),
+            ex('e5', 'Rope Triceps Extension', 'isoflow', 3, 12, 45, 'lb')
+          ]
+        },
+        log: [-26, -24, -22, -21, -19, -17, -15, -14, -12, -10, -8, -7, -5, -3, -1].map((d, i) => ({ date: k(d), name: ['Upper Push', 'Lower', 'Upper Pull', 'Lower'][i % 4], volume: 8200 + i * 180 + (i % 3) * 400, sets: 20 + (i % 4) }))
+      },
+      machines: [
+        { id: 'aps', name: 'APS Machine 2.0', kind: 'Adaptive Shoulder Press', link: 'BLE 5.0 · MQTT/TLS', status: 'online', fw: '2.4.1', sensors: 'Bilateral load cells, ROM encoder, rep velocity', metric: 'Force L/R', unit: 'N', base: 420 },
+        { id: 'isoflow', name: 'ISO Flow', kind: 'Isokinetic cable system', link: 'BLE 5.0 · MQTT/TLS', status: 'online', fw: '1.9.0', sensors: 'Torque transducer, cable speed, symmetry', metric: 'Torque', unit: 'Nm', base: 260 },
+        { id: 'hangers', name: 'Dumbbell Hangers', kind: 'Smart storage rack', link: 'BLE 5.0', status: 'beta', fw: '0.6.2', sensors: 'Pair-lifted detection (prototype)', metric: 'Pair in use', unit: 'lb', base: 40 },
+        { id: 'rack', name: 'MK-Pro Rack System', kind: 'Modular power rack', link: 'via AR-Vision', status: 'idle', fw: '—', sensors: 'Bar path from AR-Vision camera', metric: 'Bar speed', unit: 'm/s', base: 0.6 },
+        { id: 'arv', name: 'AR-Vision Module v2.4', kind: 'LiDAR + RGB pose camera', link: 'Wi-Fi 6 · local edge', status: 'online', fw: '2.4.0', sensors: '2.4M LiDAR pts/s, 33-joint pose', metric: 'Tracking', unit: '%', base: 98 },
+        { id: 'ftms', name: 'Third-party cardio', kind: 'Any Bluetooth FTMS bike, rower or treadmill', link: 'BLE FTMS profile', status: 'planned', fw: '—', sensors: 'Power, cadence, speed, HR', metric: 'Power', unit: 'W', base: 180 }
+      ],
+      nutrition: { meals, water: { [k(0)]: 1250 } },
+      life: {
+        habits: [
+          { id: 'h1', name: 'Morning light, 10 min', cat: 'sleep', log: habitLog([1, 1, 0, 1, 1, 1, 1]) },
+          { id: 'h2', name: 'Train or walk 8k steps', cat: 'move', log: habitLog([1, 1, 1, 0, 1, 1, 0]) },
+          { id: 'h3', name: 'Protein at every meal', cat: 'fuel', log: habitLog([1, 0, 1, 1, 1, 0, 1]) },
+          { id: 'h4', name: 'Screens off by 22:30', cat: 'sleep', log: habitLog([0, 1, 1, 0, 1, 1, 0]) },
+          { id: 'h5', name: '10 min breathwork', cat: 'mind', log: habitLog([1, 0, 0, 1, 1, 0, 0]) }
+        ],
+        blocks: [
+          { id: uid(), t: '06:30', dur: 20, title: 'Wake · morning light walk', cat: 'sleep' },
+          { id: uid(), t: '07:15', dur: 30, title: 'Breakfast · 40 g protein', cat: 'fuel' },
+          { id: uid(), t: '08:00', dur: 180, title: 'Deep work · product engineering', cat: 'work' },
+          { id: uid(), t: '11:30', dur: 70, title: 'Upper Push session', cat: 'move' },
+          { id: uid(), t: '12:45', dur: 45, title: 'Lunch · post-workout carbs', cat: 'fuel' },
+          { id: uid(), t: '14:00', dur: 150, title: 'Meetings · investor calls', cat: 'work' },
+          { id: uid(), t: '17:30', dur: 30, title: 'Zone 2 walk', cat: 'move' },
+          { id: uid(), t: '19:00', dur: 60, title: 'Dinner · family', cat: 'life' },
+          { id: uid(), t: '21:45', dur: 15, title: 'Breathwork · wind down', cat: 'mind' },
+          { id: uid(), t: '22:30', dur: 480, title: 'Sleep window', cat: 'sleep' }
+        ],
+        goals: [
+          { id: 'g1', name: 'Raise Vitamin D to 40+ ng/mL', progress: 31, target: 40, unit: 'ng/mL', start: 22 },
+          { id: 'g2', name: 'APS Shoulder Press 8RM', progress: 95, target: 115, unit: 'lb', start: 75 },
+          { id: 'g3', name: 'Average 7.5 h sleep', progress: 7.2, target: 7.5, unit: 'h', start: 6.4 },
+          { id: 'g4', name: 'Bodyweight for recomposition', progress: 82, target: 80, unit: 'kg', start: 85 }
+        ],
+        mood: { [k(-2)]: { mood: 4, stress: 3 }, [k(-1)]: { mood: 3, stress: 4 } }
+      },
+      gym: { name: 'Studio floor A', w: 50, l: 35, clear: 3, items: [
+        { id: uid(), type: 'aps', x: 3, y: 3, rot: 0 }, { id: uid(), type: 'aps', x: 11, y: 3, rot: 0 },
+        { id: uid(), type: 'iso', x: 20, y: 3, rot: 0 }, { id: uid(), type: 'iso', x: 30, y: 3, rot: 0 },
+        { id: uid(), type: 'rack', x: 40, y: 3, rot: 0 }, { id: uid(), type: 'hangers', x: 3, y: 30, rot: 0 },
+        { id: uid(), type: 'bench', x: 5, y: 22, rot: 0 }, { id: uid(), type: 'bench', x: 10, y: 22, rot: 0 },
+        { id: uid(), type: 'turf', x: 18, y: 17, rot: 1 }, { id: uid(), type: 'tread', x: 44, y: 18, rot: 0 },
+        { id: uid(), type: 'arv', x: 26, y: 13, rot: 0 }
+      ] },
+      chat: []
+    };
+  }
+
+  /* ── score engine ────────────────────────────────────────────────── */
+  const inRange = (v, r) => (r[0] == null || v >= r[0]) && (r[1] == null || v <= r[1]);
+  // Peak tier: the top of the performance / longevity range, inside optimal. Keyed by marker id.
+  const PEAK = {
+    apob: [null, 60], ldl: [null, 70], hdl: [60, null], tg: [null, 70], lpa: [null, 30], a1c: [4.6, 5.1], glu: [75, 86], ins: [2, 5],
+    crp: [null, 0.5], hcy: [null, 7], tt: [700, 900], ft: [18, 25], cort: [10, 16], tsh: [0.8, 2.0], ft3: [3.3, 4.0], vitd: [50, 60],
+    ferr: [70, 150], b12: [600, 1000], mg: [5.6, 6.5], o3: [10, 12], alt: [null, 20], egfr: [100, null], hgb: [14.5, 16], ck: [null, 300]
+  };
+  const peakOf = (m) => m.peak || PEAK[m.id] || m.optimal;
+  // Red flags: values dangerous enough to need in-person care today. Not optimisation targets.
+  const DANGER = {
+    glu: [54, 300, 'Blood glucose at this level can be dangerous'], a1c: [null, 10, 'HbA1c this high means blood sugar is badly out of control'],
+    hgb: [8, 20, 'Hemoglobin this far out of range can be dangerous'], egfr: [30, null, 'Kidney filtration this low needs urgent assessment'],
+    alt: [null, 200, 'A liver enzyme this high needs urgent assessment'], ck: [null, 5000, 'Creatine kinase this high can mean muscle breakdown that harms the kidneys'],
+    tsh: [0.1, 10, 'Thyroid signalling this far out of range needs assessment'], ferr: [10, 1000, 'Iron stores this far out of range need assessment'],
+    b12: [150, null, 'B12 this low can cause nerve damage'], vitd: [10, null, 'Vitamin D this low needs assessment'],
+    crp: [null, 50, 'Inflammation this high can mean an acute infection']
+  };
+  function redFlags(s) {
+    const out = [];
+    s.markers.forEach((m) => { const d = DANGER[m.id]; if (!d) return; const v = Number(m.value); if ((d[0] != null && v < d[0]) || (d[1] != null && v > d[1])) out.push({ id: m.id, name: m.name, value: v, unit: m.unit, why: d[2] }); });
+    const vt = s.vitals || {};
+    const el = (s.enhance && s.enhance.labs) || {};
+    if (el.hct >= 60) out.push({ id: 'hct', name: 'Hematocrit', value: el.hct, unit: '%', why: 'Blood this thick sharply raises the risk of clots and stroke' });
+    if (el.sbp >= 180 || el.dbp >= 120) out.push({ id: 'bp', name: 'Blood pressure', value: `${el.sbp || '?'}/${el.dbp || '?'}`, unit: 'mmHg', why: 'Blood pressure this high is a hypertensive crisis' });
+    if (vt.rhr && (vt.rhr > 120 || vt.rhr < 35)) out.push({ id: 'rhr', name: 'Resting heart rate', value: vt.rhr, unit: 'bpm', why: 'A resting heart rate this far out of range needs assessment' });
+    return out;
+  }
+  const TERMS = 'Myo, built on Myokinetics OS, is a physician-optional performance and wellness system. It measures, scores and optimises your physiology toward peak ranges and runs your protocol for you. It does not diagnose or treat disease, and it does not start, stop or dose prescription medications or hormones. If a lab value or vital reaches a dangerous level, the OS stops optimising that marker and tells you to get in-person care the same day.';
+  // distance from a value to a range, normalised by a reference width
+  const gap = (v, r, width) => { const d = r[0] != null && v < r[0] ? r[0] - v : r[1] != null && v > r[1] ? v - r[1] : 0; return clamp(d / (width || 1), 0, 1); };
+  function markerEval(m) {
+    const v = Number(m.value), pk = peakOf(m), o = m.optimal;
+    const ow = ((o[1] ?? (o[0] ?? v) * 1.5) - (o[0] ?? 0)) || Math.abs(v) || 1;
+    if (DANGER[m.id] && ((DANGER[m.id][0] != null && v < DANGER[m.id][0]) || (DANGER[m.id][1] != null && v > DANGER[m.id][1]))) return { status: 'bad', tier: 'danger', label: 'Red flag', score: 20 };
+    if (inRange(v, pk)) return { status: 'good', tier: 'peak', label: 'Peak', score: 100 };
+    if (inRange(v, o)) return { status: 'good', tier: 'optimal', label: 'Optimal', score: Math.round(88 + 11 * (1 - gap(v, pk, ow * 0.6))) };
+    if (inRange(v, m.normal)) {
+      const width = (m.normal[1] ?? (o[1] ?? v) * 1.5) - (m.normal[0] ?? 0) || 1;
+      return { status: 'warn', tier: 'normal', label: 'Below optimal', score: Math.round(60 + 25 * (1 - gap(v, o, width * 0.5))) };
+    }
+    return { status: 'bad', tier: 'out', label: 'Out of range', score: 35 };
+  }
+  function scores(s) {
+    const mk = s.markers.map((m) => ({ m, e: markerEval(m) }));
+    const tw = mk.reduce((a, x) => a + x.m.weight, 0);
+    const biology = mk.reduce((a, x) => a + x.e.score * x.m.weight, 0) / tw;
+    const vt = s.vitals;
+    const readiness = clamp(70 + (vt.hrv / vt.hrvBase - 1) * 60 + (vt.rhrBase - vt.rhr) * 2.5 + (vt.sleepH - 7) * 8 + (vt.sleepScore - 80) * 0.5, 0, 100);
+    const since = dayKey(addDays(new Date(), -7));
+    const sessions7 = s.training.log.filter((l) => l.date >= since).length;
+    const ses = s.training.session.exercises.flatMap((e) => e.sets);
+    const sessionPct = ses.filter((x) => x.done).length / Math.max(1, ses.length);
+    const training = clamp((sessions7 / s.training.program.perWeek) * 85 + sessionPct * 15, 0, 100);
+    const tg = targets(s.profile);
+    const days = [-3, -2, -1].map((d) => s.nutrition.meals[dayKey(addDays(new Date(), d))] || []);
+    const nutrition = days.reduce((a, ms) => {
+      const kcal = ms.reduce((x, m) => x + m.kcal, 0), p = ms.reduce((x, m) => x + m.p, 0);
+      return a + (clamp(p / tg.p, 0, 1.1) * 55 + (1 - clamp(Math.abs(kcal - tg.kcal) / tg.kcal, 0, 1)) * 45);
+    }, 0) / days.length;
+    const keys = Array.from({ length: 7 }, (_, i) => dayKey(addDays(new Date(), i - 6)));
+    const hab = s.life.habits.length ? s.life.habits.reduce((a, h) => a + keys.filter((kk) => h.log[kk]).length, 0) / (s.life.habits.length * 7) : 0.5;
+    const moods = Object.values(s.life.mood).slice(-5);
+    const moodAvg = moods.length ? moods.reduce((a, m) => a + (m.mood * 2 - m.stress + 3), 0) / moods.length / 10 : 0.6;
+    const life = clamp(hab * 70 + moodAvg * 30, 0, 100);
+    const parts = { biology, recovery: readiness, training, nutrition: clamp(nutrition, 0, 100), life };
+    const W = { biology: 0.3, recovery: 0.2, training: 0.2, nutrition: 0.15, life: 0.15 };
+    const mkScore = Object.keys(W).reduce((a, k) => a + parts[k] * W[k], 0);
+    return { mk: Math.round(mkScore), parts, readiness: Math.round(readiness), markers: mk, flagged: mk.filter((x) => x.e.status !== 'good'), peak: mk.filter((x) => x.e.tier === 'peak').length, redFlags: redFlags(s) };
+  }
+
+  function targets(p) {
+    const bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + (p.sex === 'F' ? -161 : 5);
+    const adj = { cut: -400, recomp: 0, gain: 300 }[p.goal] ?? 0;
+    const kcal = Math.round((bmr * (p.activity || 1.55) + adj) / 10) * 10;
+    const prot = Math.round(p.weightKg * 2.0), fat = Math.round(p.weightKg * 0.9);
+    const carb = Math.max(0, Math.round((kcal - prot * 4 - fat * 9) / 4));
+    return { kcal, p: prot, f: fat, c: carb, water: Math.round(p.weightKg * 35 / 250) * 250 };
+  }
+
+  /* ── protocol engine: biomarkers + readiness → today's plan ─────── */
+  const RULES = [
+    { id: 'p-vitd', when: (g) => g('vitd') < 40, cat: 'supplement', time: 'Breakfast', title: 'Vitamin D3 5,000 IU + K2 100 mcg', detail: 'Take with a meal that has fat. Retest in 90 days, target 40–60 ng/mL.', marker: 'vitd' },
+    { id: 'p-o3', when: (g) => g('o3') < 8, cat: 'supplement', time: 'Dinner', title: 'Omega-3, 2 g EPA + DHA', detail: 'Supports Omega-3 index toward 8%+ and lowers triglycerides.', marker: 'o3' },
+    { id: 'p-mg', when: (g) => g('mg') < 5.2, cat: 'supplement', time: 'Bedtime', title: 'Magnesium glycinate, 400 mg', detail: 'Before bed. Supports sleep quality and RBC magnesium.', marker: 'mg' },
+    { id: 'p-z2', when: (g) => g('apob') > 80 || g('ins') > 6, cat: 'training', time: 'Evening', title: 'Zone 2 cardio, 30 min', detail: 'Conversational pace (about 60–70% HRmax). Builds insulin sensitivity and supports lipids. 150 min a week.', marker: 'apob' },
+    { id: 'p-fiber', when: (g) => g('ldl') > 100 || g('apob') > 80, cat: 'nutrition', time: 'All day', title: 'Fiber 35 g, including 10 g soluble', detail: 'Oats, beans, psyllium, berries. Lowers LDL and ApoB over 8–12 weeks.', marker: 'ldl' },
+    { id: 'p-crp', when: (g) => g('crp') > 1, cat: 'nutrition', time: 'All day', title: 'Two servings oily fish or leafy greens', detail: 'Anti-inflammatory pattern while hs-CRP is above 1.0 mg/L.', marker: 'crp' },
+    { id: 'p-hcy', when: (g) => g('hcy') > 8, cat: 'supplement', time: 'Breakfast', title: 'Methylated B-complex', detail: 'Folate, B6 and B12 support homocysteine clearance.', marker: 'hcy' },
+    { id: 'p-cort', when: (g) => g('cort') > 18 || g('ft') < 15, cat: 'sleep', time: '22:30', title: 'Sleep window 22:30 → 06:30', detail: 'Eight hours in bed. Sleep debt suppresses testosterone and raises AM cortisol.', marker: 'ft' },
+    { id: 'p-light', when: () => true, cat: 'sleep', time: '06:45', title: 'Morning light, 10 minutes outdoors', detail: 'Anchors circadian rhythm. Improves sleep onset tonight.', marker: null },
+    { id: 'p-breath', when: (g) => g('cort') > 16, cat: 'mind', time: '21:45', title: 'Box breathing, 4-4-4-4 for 5 minutes', detail: 'Downshifts the nervous system before sleep.', marker: 'cort' }
+  ];
+  function protocol(s, sc) {
+    const g = (id) => Number((s.markers.find((m) => m.id === id) || {}).value ?? NaN);
+    const flagged = new Set((sc.redFlags || redFlags(s)).map((f) => f.id));
+    const items = RULES.filter((r) => { try { return !flagged.has(r.marker) && r.when(g); } catch { return false; } }).map((r) => ({ ...r }));
+    const rd = sc.readiness;
+    const sess = s.training.session;
+    items.unshift(rd >= 60
+      ? { id: 'p-train', cat: 'training', time: '11:30', title: `${sess.name} · ${s.training.program.name}`, detail: `Readiness ${rd}. Train as written: ${sess.exercises.length} exercises on APS Machine, ISO Flow and Dumbbell Hangers.`, marker: null, route: 'training' }
+      : { id: 'p-train', cat: 'training', time: '11:30', title: 'Recovery session instead of Upper Push', detail: `Readiness ${rd} is below 60. Swap to 30 min mobility plus Zone 2 and push the heavy session 24 h.`, marker: null, route: 'training' });
+    const tg = targets(s.profile);
+    items.push({ id: 'p-prot', cat: 'nutrition', time: 'All day', title: `Protein ${tg.p} g across 4 meals`, detail: `About ${Math.round(tg.p / 4)} g per meal (2.0 g/kg). Track it in Fuel.`, marker: null, route: 'fuel' });
+    return items.concat(s.customProtocol || []);
+  }
+
+  /* ── persistence adapter: Claude account (db) | Myo account (Supabase, js/auth.js) → device (localStorage) ── */
+  const LS_KEY = 'myokinetics-os-v4';
+  const Persist = {
+    mode: 'memory', ref: null, cloud: null, timer: null,
+    loadLocal() { try { const raw = localStorage.getItem(LS_KEY); if (raw) { this.mode = 'device'; return JSON.parse(raw); } this.mode = 'device'; } catch { this.mode = 'memory'; } return null; },
+    async connect() {
+      try {
+        if (!window.claude || !window.claude.use) return null;
+        const [user, db] = await Promise.all([window.claude.use('user'), window.claude.use('db')]);
+        if (!user || !db) return null;
+        const id = await user.id();
+        if (!id) return null;
+        this.ref = db.doc(`data/users/${id}/os/state`);
+        const snap = await Promise.race([this.ref.get(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))]);
+        this.mode = 'account';
+        if (snap.exists) { const d = snap.data(); if (d && d.json) return JSON.parse(d.json); }
+      } catch (e) { this.ref = null; }
+      return null;
+    },
+    save(state) {
+      clearTimeout(this.timer);
+      this.timer = setTimeout(async () => {
+        state._savedAt = Date.now();
+        const json = JSON.stringify(state);
+        try { localStorage.setItem(LS_KEY, json); } catch {}
+        if (this.ref) { try { await this.ref.set({ json, updatedAt: new Date().toISOString() }); } catch (e) { /* keep device copy */ } }
+        if (this.cloud) { try { await this.cloud.save(state); } catch (e) { /* auth.js reports sync errors */ } }
+        OS.emit('saved');
+      }, 700);
+    }
+  };
+
+  /* ── OS kernel: store, bus, router ───────────────────────────────── */
+  const listeners = {};
+  const OS = {
+    esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
+    seed, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
+    views: {}, order: [], acts: {}, changes: {},
+    state: null, current: null, cleanup: null,
+    on(ev, fn) { (listeners[ev] = listeners[ev] || []).push(fn); },
+    emit(ev, d) { (listeners[ev] || []).forEach((f) => f(d)); },
+    register(name, view) { this.views[name] = view; if (!view.hidden) this.order.push(name); },
+    act(name, fn) { this.acts[name] = fn; },
+    change(name, fn) { this.changes[name] = fn; },
+    update(fn, opts = {}) {
+      fn(this.state);
+      if (this.state.sample && !opts.keepSample) this.state.sampleEdited = true;
+      Persist.save(this.state);
+      if (opts.render !== false) this.render();
+      else this.emit('header');
+    },
+    go(name) { if (location.hash.slice(1) !== name) location.hash = name; else this.render(); },
+    render() {
+      const name = this.views[location.hash.slice(1)] ? location.hash.slice(1) : 'today';
+      const root = document.getElementById('view');
+      const scroller = document.getElementById('main');
+      const same = name === this.current;
+      const keep = same ? scroller.scrollTop : 0;
+      if (this.cleanup) { try { this.cleanup(); } catch {} this.cleanup = null; }
+      this.current = name;
+      const v = this.views[name];
+      const sc = scores(this.state);
+      root.innerHTML = v.render(this.state, sc);
+      const c = v.mount && v.mount(root, this.state, sc);
+      if (typeof c === 'function') this.cleanup = c;
+      scroller.scrollTop = keep;
+      document.title = 'Myo';
+      this.emit('route', name);
+      this.emit('header');
+    },
+    toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.hidden = false; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+      clearTimeout(this._tt); this._tt = setTimeout(() => { t.hidden = true; }, 2600);
+    }
+  };
+  window.OS = OS;
+})();

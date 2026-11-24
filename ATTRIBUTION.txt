@@ -1,0 +1,7 @@
+Myo, the Myokinetics OS member app by Merakinetics Inc.
+
+Third-party data in this folder:
+- models/anatomy (and models/xray when present): derived from BodyParts3D, (c) The Database Center for Life Science,
+  licensed CC Attribution-Share Alike 2.1 Japan (https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en).
+  The meshes were simplified, quantised and re-grouped by system. The derived mesh files are shared under the same licence.
+- models/movenet-lightning: MoveNet SinglePose Lightning v4 by Google, Apache License 2.0.
