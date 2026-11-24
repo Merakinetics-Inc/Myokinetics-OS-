@@ -14,7 +14,7 @@
       biomarkers: sc.markers.map(({ m, e }) => ({ name: m.name, value: m.value, unit: m.unit, optimal: OS.ui.fmtR(m.optimal), peak: OS.ui.fmtR(OS.peakOf(m)), tier: e.label })),
       athleteGoal: s.athlete ? { target: s.athlete.target, activeProgram: s.athlete.active || null, genotypes: s.athlete.dna, breathMorningReadings: (s.athlete.breath || []).slice(-7).map((b) => b.v) } : null,
       pedMonitoring: s.enhance && Object.keys(s.enhance.using || {}).some((k) => s.enhance.using[k]) ? { using: Object.keys(s.enhance.using).filter((k) => s.enhance.using[k]), labs: s.enhance.labs, testedAthlete: !!s.enhance.tested } : null,
-      longevity: OS.longevity ? (() => { const L = OS.longevity.summary(s, sc); return { myoBiologicalAge: +L.myoAge.toFixed(1), phenoAge: L.phenoAge && +L.phenoAge.toFixed(1), fitnessAge: +L.fitnessAge.toFixed(1), vo2max: +L.vo2.v.toFixed(1), pillars: L.pillars }; })() : null,
+      longevity: OS.longevity ? (() => { const L = OS.longevity.summary(s, sc), r1 = (x) => (x == null || !Number.isFinite(x) ? null : +x.toFixed(1)); return { myoBiologicalAge: r1(L.myoAge), phenoAge: r1(L.phenoAge), fitnessAge: r1(L.fitnessAge), vo2max: r1(L.vo2.v), pillars: L.pillars }; })() : null,
       imagingBodyComposition: s.imaging || null,
       augmentation: s.augment ? { devicesAndImplants: Object.keys(s.augment.implants || {}).filter((k) => s.augment.implants[k]), ascendTier: OS.augment ? OS.augment.tier(s).name : null } : null,
       humanFunction: OS.fn ? OS.fn.summary(s, sc) : null,
@@ -64,6 +64,7 @@ Mind: if the member mentions suicide, self-harm or a crisis, respond with care, 
     const worst = [...sc.flagged].sort((a, b) => a.e.score - b.e.score).slice(0, 3);
     if (/sleep|tired|fatigue|recover/.test(ql)) return `${s.vitals.sleepH == null ? 'No sleep data yet: connect a ring or strap on Wearables, or log nights on Sleep.' : `Sleep last night: **${s.vitals.sleepH} h**, score ${s.vitals.sleepScore}. Readiness is **${sc.readiness ?? '—'}**.`}\n- Keep the 22:30 sleep window and screens off by 22:15\n- Magnesium glycinate 400 mg before bed is in your protocol\n- 10 minutes of morning light tomorrow anchors the rhythm`;
     if (/protein|eat|food|meal|macro|calorie/.test(ql)) { const n = snap.nutritionToday; return `Today you've had **${n.eaten.p} g protein** of ${n.targets.p} g and ${n.eaten.kcal} of ${n.targets.kcal} kcal.\n- Aim for about ${Math.round(n.targets.p / 4)} g per meal\n- Put 40 g carbs + 30 g protein within an hour after the Upper Push session`; }
+    if (/lab|marker|vitamin|blood|apob|crp/.test(ql) && !sc.markers.some((x) => x.e.score != null)) return 'No lab results yet. Upload a PDF or CSV of your bloodwork on **Biology**, or paste the values, and I will rank your biggest levers.';
     if (/lab|marker|vitamin|blood|apob|crp/.test(ql)) return `Your biggest levers right now:\n${worst.map((x) => `- **${x.m.name}** ${x.m.value} ${x.m.unit} (optimal ${OS.ui.fmtR(x.m.optimal)})`).join('\n')}\nYour protocol already targets these. Retest in about ${s.retestDays} days, and talk to a clinician about anything out of range.`;
     return `${OS.coachLine(s, sc).replace(/<\/?b>/g, '**')}\n\nToday's session is **${s.training.session.name}** with ${s.training.session.exercises.length} exercises.`;
   }
