@@ -518,12 +518,13 @@
         <section class="card">
           <div class="card-h"><h2>Your data</h2></div>
           <p class="fine"><b>Terms.</b> ${esc(OS.TERMS)}</p>
-          <p>${mode === 'cloud' ? 'Synced to your Myo account. Only you can read your row, on any device where you sign in.' : mode === 'account' ? 'Saved privately to your Claude account. Only you can read it, on any device.' : mode === 'device' ? 'Saved in this browser only. Open the app in Claude while signed in to sync it to your account.' : 'Storage is unavailable in this view. Changes last until you close the page.'}</p>
+          <p>${mode === 'cloud' ? 'Synced to your Myo account. Only you can read your row, on any device where you sign in.' : mode === 'account' ? 'Saved privately to your Claude account. Only you can read it, on any device.' : mode === 'device' ? (OS.auth && OS.auth.url && !(window.claude && window.claude.use) ? 'Saved in this browser only. Sign in to your Myo account above to sync it to your other devices.' : 'Saved in this browser only. Open the app in Claude while signed in to sync it to your account.') : 'Storage is unavailable in this view. Changes last until you close the page.'}</p>
           ${s.sample ? (freshAsk ? freshConfirm() : '<div class="row"><button class="btn" data-act="fresh-ask">Start with my own data</button></div>') : ''}
           <div class="row"><button class="btn ghost" data-act="reset-ask">${s.sample ? 'Reset the sample' : 'Reset to sample data'}</button></div>
           <div id="reset-confirm" hidden class="confirm"><p>This replaces everything you've logged with the sample member${OS.auth && OS.auth.user ? ', on this device and in your Myo account' : ''}. You can't undo it.</p><div class="row"><button class="btn danger" data-act="reset">Replace my data</button><button class="btn ghost" data-act="reset-cancel">Keep my data</button></div></div>
         </section>
-      </div>`;
+      </div>
+      ${OS.rights ? OS.rights.card(s) : ''}`;
     }
   });
   OS.act('profile-save', (f) => {

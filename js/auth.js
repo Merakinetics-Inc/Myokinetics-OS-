@@ -28,6 +28,12 @@
     try { const c = JSON.parse(store.getItem(CFG_KEY) || 'null'); if (c && c.url && c.key) return c; } catch { /* none */ }
     return null;
   }
+  // Google and Apple show only when the hosted config turns them on (they must be enabled in Supabase first)
+  function providers() {
+    const g = window.MYO_CONFIG || {};
+    const list = Array.isArray(g.oauthProviders) ? g.oauthProviders : g.supabaseUrl ? [] : ['google', 'apple'];
+    return list.filter((p) => p === 'google' || p === 'apple');
+  }
   function keyRole(k) {
     if (/^sb_secret_/.test(k)) return 'secret';
     if (/^sb_publishable_/.test(k)) return 'publishable';
@@ -121,7 +127,7 @@
   const nameOf = (u) => (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || (u.email || 'Member').split('@')[0];
   const initials = (u) => nameOf(u).split(/[\s._-]+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || 'M';
   const when = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
-  const WHY = [['Your data on every device', 'Logs, labs, plans and settings sync to your private row.'], ['Wearables, securely', 'The proxy uses your sign-in to find your Oura and WHOOP connections. Tokens never reach this page.'], ['Private by default', 'Row Level Security lets each member read only their own row. Photos and scans stay on this device.'], ['No password to remember', 'A one-time code by email, or Google or Apple.']];
+  const WHY = [['Your data on every device', 'Logs, labs, plans and settings sync to your private row.'], ['Wearables, securely', 'The proxy uses your sign-in to find your Oura and WHOOP connections. Tokens never reach this page.'], ['Private by default', 'Row Level Security lets each member read only their own row. Photos and scans stay on this device.'], ['No password to remember', 'A one-time code by email. The same code creates your account.']];
 
   function card() {
     const c = cfg();
@@ -153,9 +159,9 @@
       <label class="field" for="acct-email"><span>Email</span><input id="acct-email" name="email" type="email" autocomplete="email" spellcheck="false" placeholder="you@example.com" value="${esc(A.email)}"></label>
       <button class="btn" ${A.busy ? 'disabled' : ''}>${A.busy ? 'Sending…' : 'Email me a sign-in code'}</button>
     </form>
-    <div class="acct-or">or</div>
-    <div class="acct-providers"><button type="button" class="btn ghost" data-act="acct-oauth" data-p="google">Continue with Google</button><button type="button" class="btn ghost" data-act="acct-oauth" data-p="apple">Continue with Apple</button></div>
-    <p class="fine">New here? The same code creates your account. ${cfg() && !cfg().fixed ? '<button type="button" class="link small" data-act="acct-cfg-edit">Change Supabase project</button>' : ''}</p>`;
+    ${providers().length ? `<div class="acct-or">or</div>
+    <div class="acct-providers">${providers().map((p) => `<button type="button" class="btn ghost" data-act="acct-oauth" data-p="${p}">Continue with ${p === 'google' ? 'Google' : 'Apple'}</button>`).join('')}</div>` : ''}
+    <p class="fine">New here? The same code creates your account. By signing in you agree to the <a href="terms.html">terms</a> and <a href="privacy.html">privacy policy</a>. ${cfg() && !cfg().fixed ? '<button type="button" class="link small" data-act="acct-cfg-edit">Change Supabase project</button>' : ''}</p>`;
   }
   function codeForm() {
     return `<p class="small">${esc(A.msg)}</p>
@@ -242,6 +248,14 @@
     get url() { const c = cfg(); return c ? c.url : ''; },   // the Supabase project, for the Ingest API and other functions
     initials: () => (A.user ? initials(A.user) : ''),
     async token() { if (!A.sb || !A.session) return null; try { const { data } = await A.sb.auth.getSession(); return data.session ? data.session.access_token : null; } catch { return null; } },
+    // data rights: deletes the member's account; every member table cascades (migration 20261125090000)
+    async deleteAccount() {
+      if (!A.sb || !A.user) return;
+      const { error } = await A.sb.rpc('delete_my_account');
+      if (error) throw new Error(/could not find the function|does not exist|schema cache/i.test(error.message || '') ? "Account deletion isn't switched on for this Myo project yet (the delete_my_account migration needs deploying). Nothing was removed." : friendly(error));
+      detach();
+      try { await A.sb.auth.signOut({ scope: 'local' }); } catch { /* session cleared with the device data */ }
+    },
     card
   };
   init();

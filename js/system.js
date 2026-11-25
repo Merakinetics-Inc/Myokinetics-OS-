@@ -22,6 +22,8 @@
 
   const MVP = [
     ['Welcome and setup', 'live', 'Introduction, six-step setup that ticks itself off, profile and goals', 'welcome'],
+    ['Myo hub', 'live', 'The living-cell avatar wired to every function, with a live status line on each', 'myo'],
+    ['Find anything', 'live', 'Ctrl K, ⌘K or / searches every page and common action', null],
     ['Labs, score, protocol', 'live', 'PDF, CSV and pasted lab import; 24 markers scored against optimal and peak; daily protocol', 'biology'],
     ['3D body', 'live', 'Real anatomy of nine systems (BodyParts3D) with organ pop-outs tied to markers', 'body'],
     ['Training and AR form', 'live', 'Programs, adaptive load, MoveNet pose coaching on camera or video', 'training'],
@@ -29,22 +31,48 @@
     ['MedTech integrations', 'partial', 'Bluetooth health profiles and the Console work on the device; the hosted Ingest API is built and tested (deploy with supabase/deploy.ps1); vendor partner keys (Dexcom, Withings, Garmin, Vielight) are next', 'connect'],
     ['Sleep study', 'live', '14-night protocol, sleep diary, PDF report, EDF+ recording and CSV uploads read on the device', 'sleep'],
     ['Recovery and physical therapy', 'live', 'Sonosphere sound studio, heat, cold and light protocols, rehab plans with pain monitoring', 'recovery'],
-    ['Myo AI coach', 'partial', 'Live inside Claude; the hosted app needs a model API proxy', 'coach'],
+    ['Myo AI coach', 'partial', 'Live inside Claude. On the hosted app the myo-ai function answers signed-in members once its Anthropic key is set (supabase/MYO_AI.md)', 'coach'],
+    ['Data rights', 'live', 'Download, restore and delete; account deletion cascades through delete_my_account()', 'profile'],
+    ['Report', 'live', 'A printable one-page summary for the member or a clinician', 'report'],
     ['Wearables', 'partial', 'File import live; the Supabase proxy (phase 1 and 2: webhooks, daily cache) is built and tested; run supabase/deploy.ps1 with your Oura and WHOOP app keys', 'wearables'],
     ['Accounts and sync', 'partial', 'Supabase sign-in and cloud sync built; needs the project URL and key', 'profile'],
     ['Machines', 'sim', 'APS, ISO Flow and Hangers run on sample telemetry until BLE hardware pairs', 'machines'],
     ['Membership and payments', 'planned', 'Not built: needs a billing provider and plans', null],
     ['Clinician review', 'planned', 'Not built: needs licensed partners for any medical service', null],
-    ['App store release', 'planned', 'Install as a web app first; native shell, privacy labels and review after', null]
+    ['Installable and offline', 'live', 'Web app manifest and service worker: install from the browser, open offline', null],
+    ['Privacy policy and terms', 'live', 'privacy.html and terms.html, linked from sign-in, Profile and here. Counsel review before launch', null],
+    ['App store release', 'planned', 'Native shell, privacy labels and store review after the web launch', null]
   ];
   const MVP_ST = { live: ['good', 'In this build'], partial: ['warn', 'Needs backend config'], sim: ['warn', 'Sample feed'], planned: ['muted', 'Planned'] };
 
+  function appCard() {
+    const errs = OS.errors || [], sw = (OS.sw && OS.sw.state) || 'off', mode = OS.Persist.mode;
+    const swTxt = { ready: 'Ready: Myo opens without a connection', installing: 'Getting ready', starting: 'Starting', failed: "Couldn't start", off: 'Not used in this view' }[sw] || sw;
+    const saved = mode === 'cloud' ? 'This device and your Myo account' : mode === 'account' ? 'Your Claude account' : mode === 'device' ? 'This device' : 'Memory only';
+    return `<section class="card app-card"><div class="card-h"><h2>This app</h2><span class="muted small">Myo ${esc(OS.VERSION)} · build ${OS.BUILD}</span></div>
+      <dl class="dl"><dt>Offline</dt><dd>${swTxt}</dd><dt>Saved to</dt><dd>${saved}</dd><dt>Storage used</dt><dd id="app-store">Checking…</dd><dt>Errors this session</dt><dd>${errs.length}</dd></dl>
+      <div class="row">${OS.installPrompt ? '<button class="btn" data-act="install">Install Myo</button>' : ''}<button class="btn ghost" data-act="diag-copy">Copy diagnostics</button><a class="btn ghost" href="privacy.html">Privacy policy</a><a class="btn ghost" href="terms.html">Terms</a></div>
+      ${errs.length ? `<details class="diag"><summary class="small">Recent errors</summary><ul>${errs.slice(-8).reverse().map((e) => `<li><span class="mono small">${esc(String(e.at).slice(11, 19))}</span> ${esc(e.kind)}: ${esc(e.msg)} <span class="muted small">${esc(e.where)}</span></li>`).join('')}</ul></details>` : ''}
+      <p class="fine">Diagnostics hold the app version, browser and error messages, never your health data.</p></section>`;
+  }
+  OS.act('diag-copy', async () => {
+    const d = { app: 'Myo', version: OS.VERSION, build: OS.BUILD, at: new Date().toISOString(), ua: navigator.userAgent, online: navigator.onLine, sw: OS.sw && OS.sw.state, saved: OS.Persist.mode, page: OS.current, errors: OS.errors || [] };
+    try { await navigator.clipboard.writeText(JSON.stringify(d, null, 2)); OS.toast('Diagnostics copied'); } catch { OS.toast("Couldn't copy here. Open Recent errors instead."); }
+  });
+  OS.on('install', () => { if (OS.current === 'system') OS.render(); });
+
   OS.register('system', {
     title: 'System', icon: 'system',
+    mount(root) {
+      const el = root.querySelector('#app-store');
+      if (el && navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(({ usage, quota }) => { el.textContent = `${(usage / 1e6).toFixed(1)} MB of ${(quota / 1e9).toFixed(1)} GB`; }).catch(() => { el.textContent = 'Unknown'; });
+      else if (el) el.textContent = 'Unknown';
+    },
     render() {
       const counts = { live: 0, sim: 0, planned: 0 }; LAYERS.forEach((l) => l.mods.forEach((m) => counts[m[2]]++));
       return `${OS.ui.head('Architecture', 'How Myo runs on Myokinetics OS', 'Five layers from hardware to experience. Each module links to where it runs in this app.',
         `<div class="hstat"><span>In this build</span><b class="num">${counts.live}</b></div><div class="hstat"><span>Sample feed</span><b class="num">${counts.sim}</b></div><div class="hstat"><span>Planned</span><b class="num">${counts.planned}</b></div>`)}
+      ${appCard()}
       <section class="card mvp-card"><div class="card-h"><h2>MVP readiness</h2><span class="muted small">${MVP.filter((x) => x[1] === 'live').length} of ${MVP.length} live · the rest need a backend, hardware or partners</span></div>
         <ul class="mvp">${MVP.filter(([, , , r]) => !r || OS.views[r]).map(([n, st, d, r]) => `<li><${r ? `a href="#${r}"` : 'div'} class="mvp-i"><span class="mvp-n"><b>${esc(n)}</b><span class="muted small">${esc(d)}</span></span>${pill(...MVP_ST[st])}</${r ? 'a' : 'div'}></li>`).join('')}</ul></section>
       <section class="card loop-card">

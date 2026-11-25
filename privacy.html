@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy · Myo</title>
+<meta name="description" content="How Myo, built on Myokinetics OS, collects, stores, uses and deletes your data.">
+<meta name="theme-color" content="#0a1f5c">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<style>
+:root { --bg: #f2f5fb; --card: #fff; --fg: #0a1633; --muted: #4a5a80; --line: #dde5f2; --accent: #1d4ed8; color-scheme: light dark; }
+@media (prefers-color-scheme: dark) { :root { --bg: #050a1a; --card: #0c1734; --fg: #eaf1ff; --muted: #9fb0d2; --line: #1f2f5a; --accent: #7aa2ff; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 32px 20px 64px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+.brand { font-weight: 700; font-size: 18px; color: var(--fg); text-decoration: none; } .brand span { color: var(--muted); font-weight: 500; font-size: 14px; }
+a { color: var(--accent); }
+h1 { font-size: 34px; line-height: 1.15; letter-spacing: -.02em; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 20px; margin: 32px 0 8px; letter-spacing: -.01em; }
+.meta { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font-size: 13px; color: var(--muted); font-weight: 600; }
+.wrap { overflow-x: auto; }
+li { margin: 4px 0; }
+footer { margin-top: 40px; color: var(--muted); font-size: 14px; display: flex; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><a class="brand" href="./">Myo <span>built on Myokinetics OS</span></a><a href="./">Back to Myo</a></div>
+  <h1>Privacy policy</h1>
+  <p class="meta">Effective 25 November 2026 · Merakinetics Inc.</p>
+
+  <div class="card"><p><b>The short version.</b> Myo keeps your data on your device unless you sign in. If you sign in, your data syncs to a private account row that only you can read. Your progress photos and imaging scans never leave your browser. We don't sell your data, show ads, or use tracking analytics. You can download or delete everything in the app, at any time, from Profile › Your data rights.</p></div>
+
+  <h2>Who we are</h2>
+  <p>Myo is the member app of Myokinetics OS, made by Merakinetics Inc. ("we"). This policy covers the Myo web app and its server functions.</p>
+
+  <h2>What Myo collects, and where it goes</h2>
+  <div class="wrap"><table>
+    <thead><tr><th scope="col">Data</th><th scope="col">Where it is kept</th><th scope="col">Why</th></tr></thead>
+    <tbody>
+      <tr><td>Profile (name, age, sex, height, weight, goals)</td><td>Your device; your account row if you sign in</td><td>Targets, reference ranges and plans</td></tr>
+      <tr><td>Lab results you import or type</td><td>Your device; your account row if you sign in. PDFs are read on your device and not uploaded.</td><td>Scores, red flags and your protocol</td></tr>
+      <tr><td>Sleep, training, meals, habits, mood, check-ins</td><td>Your device; your account row if you sign in</td><td>Readiness, plans and progress</td></tr>
+      <tr><td>Progress photos and imaging scans (DICOM)</td><td>Only your browser (IndexedDB). Never uploaded.</td><td>On-device scans and 3D views</td></tr>
+      <tr><td>Camera and video for form coaching</td><td>Processed on your device frame by frame. Not recorded or uploaded.</td><td>Pose tracking</td></tr>
+      <tr><td>Email address</td><td>Our sign-in provider (Supabase)</td><td>One-time sign-in codes and your account</td></tr>
+      <tr><td>Oura and WHOOP connections</td><td>Encrypted access tokens on our server; daily summaries cached for up to 90 days</td><td>Syncing your wearable data, only after you connect</td></tr>
+      <tr><td>Ingest API keys and partner data</td><td>Keys are stored only as hashes. Items wait in your private inbox until the app applies them.</td><td>Devices and services you connect</td></tr>
+      <tr><td>Questions to Myo AI</td><td>Sent with a summary of your data to the AI model provider to produce an answer (see below)</td><td>Coaching answers</td></tr>
+      <tr><td>Error messages (this session only)</td><td>Your browser. Shared only if you copy diagnostics and send them to us.</td><td>Fixing problems</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Myo AI</h2>
+  <p>When you ask Myo a question, the app sends your question, the recent conversation and a summary of your data (scores, lab values, vitals, plans) to an AI model so it can answer. Inside Claude, Anthropic's Claude service handles it under your Claude account. On Myo's own web address, Myo's server function sends it to Anthropic's API under Merakinetics' commercial agreement with Anthropic, and only when you are signed in. Your photos and scans are never sent. If you ask for a scan insight, only body measurements derived on your device are sent.</p>
+
+  <h2>Service providers</h2>
+  <ul>
+    <li><b>Supabase</b> (database, sign-in and server functions, hosted in the United States) stores account data under our instructions.</li>
+    <li><b>Anthropic</b> processes Myo AI requests.</li>
+    <li><b>Oura and WHOOP</b> send us the data you authorise when you connect them; their own privacy policies apply to their services.</li>
+    <li><b>GitHub Pages</b> serves the app files. <b>Google Fonts, jsDelivr and cdnjs</b> serve fonts and open-source libraries, so they receive your IP address when your browser downloads them, as with any website.</li>
+  </ul>
+  <p>We don't sell or rent your data, share it for advertising, or let anyone else use it for their own purposes. We disclose data only to the providers above, when the law requires it, or with your instruction.</p>
+
+  <h2>Health information</h2>
+  <p>Myo is a consumer wellness service. Unless a clinic or employer provides Myo to you under its own agreement with us, the information you put in Myo is not covered by HIPAA. We protect it under this policy and the consumer health privacy laws that apply to you, such as Washington's My Health My Data Act. If a breach ever affects your health information, we will notify you and the authorities as the law requires, including under the FTC Health Breach Notification Rule.</p>
+
+  <h2>Security</h2>
+  <p>Connections are encrypted in transit. Your account row is protected by row-level security, so only your signed-in account can read it. Wearable tokens are encrypted at rest, API keys are stored as hashes, and server audit logs never contain health values. No system is perfectly secure, so please keep your email account secure, since it controls your sign-in.</p>
+
+  <h2>How long we keep data</h2>
+  <ul>
+    <li>Device data stays until you delete it or clear your browser.</li>
+    <li>Account data stays while your account exists. When you delete your account, it is erased immediately from our live database and disappears from encrypted backups within 30 days.</li>
+    <li>Wearable summaries are cached for up to 90 days. Ingest items are removed 30 days after the app applies them, or after 90 days if never applied.</li>
+  </ul>
+
+  <h2>Your choices and rights</h2>
+  <ul>
+    <li><b>Download</b> a copy of your data: Profile › Your data rights › Download my data.</li>
+    <li><b>Correct</b> anything by editing it in the app.</li>
+    <li><b>Delete</b> everything: Profile › Your data rights › Delete. This removes your device data and, if you are signed in, your account and everything linked to it.</li>
+    <li><b>Disconnect</b> a wearable or revoke an Ingest API key at any time; we then stop receiving that data.</li>
+  </ul>
+  <p>Depending on where you live (for example California, Washington, other US states, the UK or the EU), you may have rights to access, correct, delete or port your data, to withdraw consent, and to complain to a regulator. You can use them in the app or by contacting us. We won't discriminate against you for using them.</p>
+
+  <h2>Children</h2>
+  <p>Myo is for adults aged 18 and over. We don't knowingly collect data from children. If you believe a child has used Myo, contact us and we will delete their data.</p>
+
+  <h2>Changes</h2>
+  <p>If we change this policy in a way that affects you, we will show a notice in the app before the change takes effect. The date at the top shows the current version.</p>
+
+  <h2>Contact</h2>
+  <p>Merakinetics Inc. For privacy questions or requests, use the Support page on <a href="https://merakinetics-inc.github.io/MERAKINETICS/">merakinetics-inc.github.io/MERAKINETICS</a>.</p>
+
+  <footer><a href="terms.html">Terms of use</a><a href="./">Open Myo</a><span>© 2026 Merakinetics Inc.</span></footer>
+</main>
+</body>
+</html>

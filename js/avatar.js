@@ -11,6 +11,9 @@
   A.on = (f) => { A.subs.add(f); return () => A.subs.delete(f); };
   const LABEL = { idle: 'Online', listening: 'Listening', thinking: 'Thinking', speaking: 'Speaking' };
   A.label = (st) => LABEL[st || A.state];
+  // a burst of neural pulses in every mounted cell (the hub fires one when a connection lights up)
+  A.bursts = 0;
+  A.burst = () => { A.bursts++; A.subs.forEach((f) => { try { f(A.state); } catch {} }); };
 
   /* ── cell geometry (unit radius, seeded so it never changes between frames) ── */
   function cellGeo(small) {
@@ -30,7 +33,7 @@
     const small = !!opts.small, G = small ? GEO.sm : GEO.lg;
     const ctx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1);
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let raf = 0, alive = true, last = 0, level = 0, col = COL[A.state].slice();
+    let raf = 0, alive = true, last = 0, level = 0, col = COL[A.state].slice(), seen = A.bursts;
     const pulses = [];
     const size = () => { const w = cv.clientWidth || (small ? 34 : 280), h = cv.clientHeight || w; if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); } return [w, h]; };
     function frame(now) {
@@ -81,6 +84,7 @@
       if (!small) { ctx.lineWidth = 0.8; G.edges.forEach(([i, j]) => { ctx.strokeStyle = rgb(0.4); ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[j][0], pts[j][1]); ctx.stroke(); }); }
       const rate = { idle: 2, listening: 6, thinking: 30, speaking: 12 }[st] * (small ? 0.4 : 1);
       if (!reduce && G.edges.length) { let n = rate * dt; while (n > 0) { if (Math.random() < n) pulses.push({ e: (Math.random() * G.edges.length) | 0, u: 0, v: 0.8 + Math.random() * 1.6 }); n -= 1; } }
+      if (!reduce && seen !== A.bursts && G.edges.length) { seen = A.bursts; for (let i = 0; i < (small ? 3 : 9); i++) pulses.push({ e: (Math.random() * G.edges.length) | 0, u: Math.random() * 0.3, v: 1.4 + Math.random() * 1.4 }); }
       for (let i = pulses.length - 1; i >= 0; i--) {
         const p = pulses[i]; p.u += p.v * dt * (st === 'thinking' ? 1.8 : 1); if (p.u >= 1) { pulses.splice(i, 1); continue; }
         const [a, b] = G.edges[p.e], x = pts[a][0] + (pts[b][0] - pts[a][0]) * p.u, y = pts[a][1] + (pts[b][1] - pts[a][1]) * p.u, r = small ? 1.4 : 3;

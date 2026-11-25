@@ -1,0 +1,23 @@
+{
+  "id": "./",
+  "name": "Myo · built on Myokinetics OS",
+  "short_name": "Myo",
+  "description": "Your labs, wearables, sleep, training and recovery read together and turned into one plan for today.",
+  "start_url": "./#today",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#030b26",
+  "theme_color": "#0a1f5c",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Myo hub", "url": "./#myo", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Today", "url": "./#today", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Talk to Myo", "url": "./#coach", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

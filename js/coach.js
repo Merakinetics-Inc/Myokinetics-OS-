@@ -76,14 +76,16 @@ Mind: if the member mentions suicide, self-harm or a crisis, respond with care, 
     const list = document.getElementById('chat-list');
     const bubble = document.createElement('li'); bubble.className = 'msg msg-ai'; bubble.innerHTML = '<div class="msg-b"><p class="thinking">Myo is thinking…</p></div>';
     list && list.appendChild(bubble); scrollChat();
-    const sample = OS.caps && OS.caps.sample;
+    // inside Claude: Claude's sample capability; on Myo's own web address: the myo-ai function, for signed-in members
+    const sample = (OS.caps && OS.caps.sample) || (OS.myoAi && OS.myoAi.ready() ? OS.myoAi.sample : null);
     let answer = '', err = null;
-    if (!sample) { await new Promise((r) => setTimeout(r, 500)); answer = offlineAnswer(text) + '\n\n*Offline coach. Open Myo in Claude for the full AI coach.*'; }
+    if (!sample) { await new Promise((r) => setTimeout(r, 500)); answer = offlineAnswer(text) + `\n\n*${offlineNote()}*`; }
     else {
       const hist = OS.state.chat.filter((m) => !m.err).slice(-12);
       const msgs = []; hist.forEach((m) => { const last = msgs[msgs.length - 1]; if (last && last.role === m.role) last.content += '\n' + m.content; else msgs.push({ role: m.role, content: m.content }); });
       while (msgs.length && msgs[0].role !== 'user') msgs.shift();
-      msgs[0] = { role: 'user', content: `${PREFACE}\n\nMEMBER DATA SNAPSHOT (JSON):\n${JSON.stringify(snapshot())}\n\nMember: ${msgs[0].content}` };
+      // the hosted function adds Myo's system prompt on the server, so only the data and the question go up
+      msgs[0] = { role: 'user', content: `${sample.hosted ? '' : PREFACE + '\n\n'}MEMBER DATA SNAPSHOT (JSON):\n${JSON.stringify(snapshot())}\n\nMember: ${msgs[0].content}` };
       ctrl = new AbortController();
       try {
         const r = await sample(msgs, { tools: tools(), signal: ctrl.signal, cache: false, onText: ({ text: t }) => { if (OS.Avatar && !OS.Avatar.voice) OS.Avatar.set('speaking'); const b = bubble.querySelector('.msg-b'); if (b) { b.innerHTML = md(t); scrollChat(); } } });
@@ -91,7 +93,9 @@ Mind: if the member mentions suicide, self-harm or a crisis, respond with care, 
       } catch (e) {
         err = e; answer = e && e.text ? e.text : '';
         if (e && e.code === 'not_granted') { OS.caps.sample = null; answer = offlineAnswer(text) + '\n\n*AI coach access was declined, so this is the offline coach.*'; err = null; }
-        else if (e && e.code === 'rate_limited') answer = answer || 'Myo is getting a lot of questions right now. Try again in a minute.';
+        else if (e && (e.code === 'unavailable' || e.code === 'not_signed_in') && !answer) { answer = offlineAnswer(text) + `\n\n*Offline coach: ${e.message}*`; err = null; }
+        else if (e && e.code === 'daily_limit') { answer = offlineAnswer(text) + `\n\n*${e.message}*`; err = null; }
+        else if (e && e.code === 'rate_limited') answer = answer || e.message || 'Myo is getting a lot of questions right now. Try again in a minute.';
         else if (e && e.code === 'cancelled') answer = answer || 'Stopped.';
         else answer = answer || "Myo couldn't answer just now. Check your connection and try again.";
       }
@@ -102,6 +106,8 @@ Mind: if the member mentions suicide, self-harm or a crisis, respond with care, 
     const inp = document.getElementById('chat-in'); if (inp) inp.focus();
     if (OS.Avatar) { if (OS.Avatar.voice && OS.caps.tts && !err) OS.Avatar.speak(answer); else OS.Avatar.set('idle'); }
   }
+  const hosted = () => !!(OS.myoAi && OS.myoAi.configured());
+  const offlineNote = () => hosted() ? 'Offline coach. Sign in on Profile to talk to the full Myo AI.' : 'Offline coach. Open Myo in Claude for the full AI coach.';
   const scrollChat = () => { const box = document.getElementById('chat-scroll'); if (box) box.scrollTop = box.scrollHeight; };
 
   const QUICK = ['Should I train heavy today?', 'Build my week around my labs', 'How do I raise my Vitamin D?', 'Add a Zone 2 walk at 17:30', 'What should I eat after training?', 'Fix my shoulder press form'];
@@ -109,9 +115,11 @@ Mind: if the member mentions suicide, self-harm or a crisis, respond with care, 
   OS.register('coach', {
     title: 'Coach', icon: 'coach',
     render(s, sc) {
-      const on = !!(OS.caps && OS.caps.sample);
+      const viaHost = !(OS.caps && OS.caps.sample) && !!(OS.myoAi && OS.myoAi.ready());
+      const on = !!(OS.caps && OS.caps.sample) || viaHost;
       const msgs = s.chat.length ? s.chat : [{ role: 'assistant', content: sc.mk == null ? `I'm Myo. Your account is new, so I have no scores yet. Add your labs on Biology, connect a ring or strap, or log a session, and I'll read them with you.` : `I'm Myo. I can see your MK Score (**${sc.mk}**), readiness (**${sc.readiness ?? '—'}**), ${s.markers.length} biomarkers, today's session and your day plan.\n\nAsk me anything about training, labs, food or recovery. I can also add actions to your protocol and blocks to your day.` }];
-      return `${OS.ui.head('Intelligence layer', 'Myo, your AI coach', on ? 'Reads your full health graph each time you ask. Can update your protocol and schedule.' : 'Running the offline coach. Open in Claude for the full AI coach.')}
+      return `${OS.ui.head('Intelligence layer', 'Myo, your AI coach', on ? 'Reads your full health graph each time you ask. Can update your protocol and schedule.' : hosted() ? 'Running the offline coach. Sign in on Profile to talk to the full Myo AI.' : 'Running the offline coach. Open in Claude for the full AI coach.')}
+      ${viaHost ? '<p class="fine coach-privacy">When you ask, Myo sends your question and a summary of your data (scores, labs, vitals, plans) to Anthropic to write the answer. Photos and scans never leave this device. <a href="privacy.html">Privacy policy</a></p>' : ''}
       <div class="grid g-chat">
         <section class="card flush chat">
           <div class="chat-scroll" id="chat-scroll"><ul class="chat-list" id="chat-list">${msgs.map((m) => `<li class="msg ${m.role === 'user' ? 'msg-me' : 'msg-ai'} ${m.err ? 'msg-err' : ''}"><div class="msg-b">${m.role === 'user' ? `<p>${esc(m.content)}</p>` : md(m.content)}</div></li>`).join('')}</ul></div>

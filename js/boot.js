@@ -8,12 +8,13 @@
     { k: 'today', label: 'Today', items: ['today'] },
     { k: 'body', label: 'Body', items: ['body', 'biology', 'sleep', 'looks', 'recovery', 'pt', 'imaging', 'mirror', 'function', 'longevity', 'wearables'] },
     { k: 'training', label: 'Training', items: ['training', 'athlete', 'ar', 'machines', 'gym'] },
-    { k: 'coach', label: 'Coach', items: ['coach'] },
+    { k: 'myo', label: 'Myo', items: ['myo', 'coach'] },
     { k: 'life', label: 'Life', items: ['fuel', 'life', 'enhance'] },
-    { k: 'more', label: 'More', items: ['connect', 'augment', 'system'] }
+    { k: 'more', label: 'More', items: ['connect', 'report', 'augment', 'system'] }
   ];
-  const DESC = { connect: 'MedTech devices, Bluetooth and the Ingest API', looks: 'Physique, skin, face and procedures build', sleep: '14-night study, sleep reports and recordings', recovery: 'Sonosphere sound, heat, cold, red light', pt: 'Rehab plans with pain monitoring', body: 'Real 3D anatomy, every system', biology: 'Biomarkers against optimal ranges', imaging: 'CT, MRI and DEXA viewer', mirror: 'Live x-ray of head and hands', function: 'Movement, cognition and mood tests', longevity: 'Biological age and healthspan plan', wearables: 'Oura and WHOOP sync', training: "Today's session and program", athlete: 'Build toward an athlete type', ar: 'Form coaching on camera', machines: 'APS, ISO Flow and connected gear', gym: 'Plan a facility', fuel: 'Meals, protein and water', life: 'Habits, schedule and goals', enhance: 'Supplements, graded by evidence', augment: 'Ascend tiers and devices', system: 'How Myo is built and MVP status', welcome: 'Introduction and setup' };
-  const TABS = ['today', 'body', 'coach', 'training'];
+  const DESC = { myo: 'Every function around the living cell', coach: 'Ask Myo by voice or text', report: 'A printable summary for you or your clinician', profile: 'Account, sync and your data rights', today: "Today's protocol and scores", connect: 'MedTech devices, Bluetooth and the Ingest API', looks: 'Physique, skin, face and procedures build', sleep: '14-night study, sleep reports and recordings', recovery: 'Sonosphere sound, heat, cold, red light', pt: 'Rehab plans with pain monitoring', body: 'Real 3D anatomy, every system', biology: 'Biomarkers against optimal ranges', imaging: 'CT, MRI and DEXA viewer', mirror: 'Live x-ray of head and hands', function: 'Movement, cognition and mood tests', longevity: 'Biological age and healthspan plan', wearables: 'Oura and WHOOP sync', training: "Today's session and program", athlete: 'Build toward an athlete type', ar: 'Form coaching on camera', machines: 'APS, ISO Flow and connected gear', gym: 'Plan a facility', fuel: 'Meals, protein and water', life: 'Habits, schedule and goals', enhance: 'Supplements, graded by evidence', augment: 'Ascend tiers and devices', system: 'How Myo is built and MVP status', welcome: 'Introduction and setup' };
+  OS.navDesc = DESC;
+  const TABS = ['today', 'myo', 'body', 'training'];
   const chev = '<svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>';
   const groups = () => GROUPS.map((g) => ({ ...g, items: g.items.filter((n) => OS.views[n]) })).filter((g) => g.items.length);
   OS.navGroups = groups;
@@ -36,6 +37,7 @@
     document.addEventListener('click', (e) => { if (!e.target.closest('#topnav')) closeMenus(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeMenus(); const sh = document.getElementById('sheet'); if (sh && !sh.hidden) sh.hidden = true; } });
   }
+  OS.act('skip', () => { const h = document.querySelector('#view h1') || document.getElementById('main'); h.setAttribute('tabindex', '-1'); h.focus(); });
   OS.act('nav-sheet', () => {
     const sh = document.getElementById('sheet'), cur = OS.current;
     sh.innerHTML = `<div class="sheet-in" role="dialog" aria-label="All of Myo"><span class="sheet-grip"></span>${groups().map((g) => `<section><h3>${g.label}</h3><div class="sheet-grid">${g.items.map((n) => `<a href="#${n}" ${n === cur ? 'aria-current="page"' : ''}><span>${icon(OS.views[n].icon, 18)}</span>${esc(OS.views[n].title)}</a>`).join('')}</div></section>`).join('')}</div>`;
@@ -92,4 +94,23 @@
     if (remote && remote.v === 4) { OS.state = remote; OS.render(); }
     header();
   });
+
+  // installable and offline-capable on hosted copies (sw.js). Claude's viewer and file:// pages skip it.
+  OS.sw = { state: 'off' };
+  if ('serviceWorker' in navigator && !(window.claude && window.claude.use) && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    OS.sw.state = 'starting';
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      OS.sw.state = navigator.serviceWorker.controller ? 'ready' : 'installing';
+      navigator.serviceWorker.ready.then(() => { OS.sw.state = 'ready'; });
+      setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+    }).catch((e) => { OS.sw.state = 'failed'; OS.logError('sw', e && e.message, 'register'); });
+  }
+  // install prompt (Chromium): offered from the System page, never popped up unasked
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); OS.installPrompt = e; OS.emit('install'); });
+  window.addEventListener('appinstalled', () => { OS.installPrompt = null; OS.toast('Myo is installed. Open it from your home screen or app list.'); });
+  OS.act('install', async () => { const p = OS.installPrompt; if (!p) return; p.prompt(); try { await p.userChoice; } catch { /* dismissed */ } OS.installPrompt = null; OS.render(); });
+  const offline = () => document.documentElement.toggleAttribute('data-offline', !navigator.onLine);
+  window.addEventListener('online', () => { offline(); OS.toast('Back online'); });
+  window.addEventListener('offline', () => { offline(); OS.toast("You're offline. Myo keeps working on this device and syncs when you're back."); });
+  offline();
 })();
