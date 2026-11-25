@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Shared Myo record</title>
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<style>
+:root { --bg: #f2f5fb; --card: #fff; --fg: #0a1633; --muted: #4a5a80; --line: #dde5f2; --accent: #1d4ed8; --good: #0f7a52; --warn: #946200; --bad: #b42318; color-scheme: light dark; }
+@media (prefers-color-scheme: dark) { :root { --bg: #050a1a; --card: #0c1734; --fg: #eaf1ff; --muted: #9fb0d2; --line: #1f2f5a; --accent: #7aa2ff; --good: #34d399; --warn: #fbbf24; --bad: #ff8a80; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 56px; display: flex; flex-direction: column; gap: 16px; }
+.brand { font-weight: 700; } .brand span { color: var(--muted); font-weight: 500; font-size: 13px; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -.02em; }
+h2 { font-size: 16px; margin: 0 0 8px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.muted { color: var(--muted); } .small { font-size: 13px; }
+.top { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.score { position: relative; width: 150px; height: 150px; flex: none; }
+.score b { position: absolute; inset: 0; display: grid; place-items: center; font: 700 40px ui-monospace, monospace; }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; flex: 1; min-width: 220px; }
+.parts div { border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; } .parts span { display: block; font-size: 12px; color: var(--muted); } .parts b { font: 600 20px ui-monospace, monospace; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); } th { font-size: 12px; color: var(--muted); }
+td.num { font-family: ui-monospace, monospace; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.p-g { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); } .p-w { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); } .p-b { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); } .p-m { color: var(--muted); }
+.alert { border-color: var(--bad); } .alert h2 { color: var(--bad); }
+.wrap { overflow-x: auto; }
+footer { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main id="app"><p>Opening the shared record…</p></main>
+<script src="js/share-view.js"></script>
+</body>
+</html>

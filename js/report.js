@@ -22,7 +22,7 @@
           <dl class="rp-who"><dt>Member</dt><dd>${esc(who)}</dd><dt>Age · sex</dt><dd>${esc(p.age)} · ${p.sex === 'F' ? 'Female' : 'Male'}</dd><dt>Generated</dt><dd>${esc(generated)}</dd><dt>Labs dated</dt><dd>${s.labsDate ? esc(OS.fmtDate(s.labsDate)) : '—'}</dd></dl></header>
         ${sc.redFlags.length ? `<section class="rp-flags" role="alert"><h2>Needs in-person care</h2><ul>${sc.redFlags.map((f) => `<li><b>${esc(f.name)} ${esc(f.value)} ${esc(f.unit)}</b>: ${esc(f.why)}.</li>`).join('')}</ul></section>` : ''}
         <section class="rp-scores" aria-label="Scores">
-          <div><span>MK Score</span><b class="num">${dash(sc.mk)}</b></div><div><span>Readiness</span><b class="num">${dash(sc.readiness)}</b></div>
+          <div><span>Myo Score</span><b class="num">${dash(sc.mk)}</b></div><div><span>Readiness</span><b class="num">${dash(sc.readiness)}</b></div>
           ${PARTS.map(([key, l]) => `<div><span>${l}</span><b class="num">${dash(sc.parts[key] == null ? null : Math.round(sc.parts[key]))}</b></div>`).join('')}
         </section>
         <section><h2>Lab results</h2>${labs.length ? `<div class="tbl-wrap"><table class="rp-tbl"><thead><tr><th scope="col">Marker</th><th scope="col">Result</th><th scope="col">Unit</th><th scope="col">Optimal</th><th scope="col">Peak</th><th scope="col">Status</th></tr></thead><tbody>${labs.map(row).join('')}</tbody></table></div>` : '<p class="muted">No lab results yet.</p>'}</section>

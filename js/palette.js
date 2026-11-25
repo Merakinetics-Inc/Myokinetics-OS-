@@ -29,7 +29,9 @@
     gym: 'facility layout floor plan', fuel: 'food meals protein calories water nutrition', life: 'habits schedule goals mood',
     enhance: 'supplements stack peds', looks: 'skin physique face dermatology aesthetics', connect: 'integrations api devices fhir hl7 bluetooth vielight',
     augment: 'ascend implants exoskeleton tiers', system: 'architecture status version diagnostics install offline', profile: 'account sign in sync data delete export',
-    coach: 'ai chat ask voice', myo: 'hub map all functions', report: 'pdf print clinician summary', welcome: 'intro setup start onboarding'
+    coach: 'ai chat ask voice', myo: 'hub map all functions', report: 'pdf print clinician summary', welcome: 'intro setup start onboarding',
+    kitchen: 'food calories recipes meal prep plan shopping barcode supplements cook', motion: 'jump plyometrics vertical rsi drop squat valgus movement screen xr vector', biochem: 'metabolism pathways insulin lipids methylation thyroid biochemistry',
+    evidence: 'studies research pubmed trials science learning', score: 'myo score qr share record', mode: 'full screen dashboard scan neuro body surgery procedure', mind: 'mental health anxiety depression stress mood phq gad therapy crisis'
   };
   function index() {
     const pages = Object.keys(OS.views).filter((n) => OS.views[n].title).map((n) => ({ t: OS.views[n].title, d: (OS.navDesc && OS.navDesc[n]) || '', ic: OS.views[n].icon, go: n, kw: `${n} ${KW[n] || ''}`, page: true }));

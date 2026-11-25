@@ -6,7 +6,7 @@
       and WHOOP requires the client secret server-side, so production must use the proxy.
    3. WHOOP access token (developer testing): WHOOP's API accepts browser calls with a Bearer token.
    Verified against Oura API v2 (OpenAPI 1.43) and WHOOP API v2 docs, 2026-11.
-   The chosen source drives vitals → readiness → MK Score, protocol gating, Coach, Longevity and Function. */
+   The chosen source drives vitals → readiness → Myo Score, protocol gating, Coach, Longevity and Function. */
 (function () {
   'use strict';
   const { esc, pill, icon, clamp, dayKey, addDays } = OS;
@@ -313,7 +313,7 @@
       <div class="grid g-2">${srcCard('oura')}${srcCard('whoop')}</div>
       <section class="card"><div class="card-h"><h2>What drives readiness</h2><span class="muted small">${esc(s.vitals.src || 'Sample vitals (no wearable connected)')}</span></div>
         <div class="row wv-pri"><div class="seg">${[['auto', 'Most recent'], ['oura', 'Oura'], ['whoop', 'WHOOP']].map(([k, l]) => `<button class="${W.primary === k ? 'on' : ''}" data-act="wv-primary" data-v="${k}" aria-pressed="${W.primary === k}" ${k !== 'auto' && !W[k].days.length ? 'disabled' : ''}>${l}</button>`).join('')}</div>
-          <p class="small">Feeds HRV, resting HR, sleep and steps into Myo readiness (${sc.readiness == null ? 'none yet' : sc.readiness + ' today'}), which gates heavy training, the MK Score, the Coach, Longevity's sleep pillar and Function's behaviour score.</p></div>
+          <p class="small">Feeds HRV, resting HR, sleep and steps into Myo readiness (${sc.readiness == null ? 'none yet' : sc.readiness + ' today'}), which gates heavy training, the Myo Score, the Coach, Longevity's sleep pillar and Function's behaviour score.</p></div>
         ${agree != null ? `<p class="small">Both devices last night: HRV ${Math.round(lo.hrv)} ms (Oura) vs ${Math.round(lw.hrv)} ms (WHOOP), ${agree}% apart. They measure differently (Oura averages the whole night; WHOOP weights deep sleep), so compare each device with its own baseline, not with the other.</p>` : ''}</section>
       ${total ? `<section class="card"><div class="card-h"><h2>Last 30 days</h2><div class="seg">${[['trends', 'Charts'], ['table', 'Table']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="wv-tab" data-v="${k}">${l}</button>`).join('')}</div></div>
         ${tab === 'trends' ? `<div class="wv-charts">${lineChart('score', 'Readiness / recovery', '', (x) => x.score, W, 30, 100)}${lineChart('hrv', 'HRV', 'ms', (x) => x.hrv, W)}${lineChart('rhr', 'Resting heart rate', 'bpm', (x) => x.rhr, W)}${lineChart('sleep', 'Sleep', 'h', (x) => x.sleepH, W)}</div>`

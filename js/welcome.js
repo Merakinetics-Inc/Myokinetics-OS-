@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const { esc, icon, pill } = OS;
-  const LOOP = [['Measure', 'Labs, wearables, scans, machine telemetry and AR form data', 'biology'], ['Score', 'MK Score and a score for every body system', 'today'], ['Prescribe', 'A daily protocol and adaptive training', 'today'], ['Execute', 'Train on connected machines with AR correction', 'training'], ['Retest', 'New labs every 90 days; the plan updates itself', 'biology']];
+  const LOOP = [['Measure', 'Labs, wearables, scans, machine telemetry and AR form data', 'biology'], ['Score', 'Myo Score and a score for every body system', 'today'], ['Prescribe', 'A daily protocol and adaptive training', 'today'], ['Execute', 'Train on connected machines with AR correction', 'training'], ['Retest', 'New labs every 90 days; the plan updates itself', 'biology']];
   const RUNS = [
     ['body', 'Body', 'See every system in 3D and pull out any organ with your results.', ['body', 'biology', 'imaging', 'longevity', 'function']],
     ['recovery', 'Recovery and rehab', 'Sonosphere sound baths, heat, cold and red light, and physical therapy plans.', ['recovery', 'pt']],
@@ -15,7 +15,7 @@
     ['wearable', 'Wearables', 'Oura and WHOOP sleep, HRV and recovery.', ['wearables']],
     ['augment', 'Ascend', 'From peak human to exoskeletons and neural links.', ['augment', 'mirror']]
   ];
-  const WEEK = [['Set up and baseline', 'Profile, sign-in and a look at your 3D body', 'welcome'], ['Labs', 'Upload a recent panel and get your MK Score', 'biology'], ['Train', 'First adaptive session with AR form checks', 'training'], ['Recover', 'A Sonosphere session and your heat and cold plan', 'recovery'], ['Fuel', 'Hit your protein and water targets', 'fuel'], ['Function', 'Reaction, memory and balance tests', 'function'], ['Review with Myo', 'Ask Myo what moved and what to change', 'coach']];
+  const WEEK = [['Set up and baseline', 'Profile, sign-in and a look at your 3D body', 'welcome'], ['Labs', 'Upload a recent panel and get your Myo Score', 'biology'], ['Train', 'First adaptive session with AR form checks', 'training'], ['Recover', 'A Sonosphere session and your heat and cold plan', 'recovery'], ['Fuel', 'Hit your protein and water targets', 'fuel'], ['Function', 'Reaction, memory and balance tests', 'function'], ['Review with Myo', 'Ask Myo what moved and what to change', 'coach']];
   const ASK = ['What should I focus on this week?', 'Why is my readiness lower today?', 'Plan my recovery after a heavy leg day'];
   function steps(s) {
     const W = s.wear || {}, wear = (W.oura && W.oura.days && W.oura.days.length) || (W.whoop && W.whoop.days && W.whoop.days.length);
@@ -40,7 +40,7 @@
           <h1>Welcome to the master operating system for your body.</h1>
           <p class="wl-lead">Myo reads your labs, wearables, scans, training and daily life, scores every system of your body, and runs a plan each day that moves you toward peak range. Physician-optional, measured and safe.</p>
           <div class="wl-cta"><a class="btn wl-btn" href="#wl-setup" data-act="wl-scroll">${done === st.length ? 'Review setup' : 'Start setup'}</a><a class="btn ghost wl-btn-ghost" href="#body">Explore your body in 3D</a></div>
-          <dl class="wl-stats"><div><dt>MK Score</dt><dd class="num">${OS.dash(sc.mk)}</dd></div><div><dt>Readiness</dt><dd class="num">${OS.dash(sc.readiness)}</dd></div><div><dt>Biomarkers</dt><dd class="num">${s.markers.length}</dd></div><div><dt>Body systems</dt><dd class="num">9</dd></div></dl>
+          <dl class="wl-stats"><div><dt>Myo Score</dt><dd class="num">${OS.dash(sc.mk)}</dd></div><div><dt>Readiness</dt><dd class="num">${OS.dash(sc.readiness)}</dd></div><div><dt>Biomarkers</dt><dd class="num">${s.markers.length}</dd></div><div><dt>Body systems</dt><dd class="num">9</dd></div></dl>
         </div>
         <div class="wl-figure"><div class="a3d" data-a3d="compact" data-systems="skin,cardiovascular,nervous" aria-label="3D body"></div></div>
       </section>

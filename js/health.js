@@ -89,7 +89,7 @@
       <div class="grid g-3">
         <section class="card">
           <div class="card-h"><h2>Your body, scored</h2><button class="link small" data-act="go" data-to="biology">Biology</button></div>
-          <div class="score-body"><div class="score-ring">${ring(sc.mk, 148, 10, 'MK Score')}<div class="score-num"><b class="num">${D(sc.mk)}</b><span>${sc.mk == null ? 'Add data' : 'MK Score'}</span></div></div>
+          <div class="score-body"><div class="score-ring">${ring(sc.mk, 148, 10, 'Myo Score')}<div class="score-num"><b class="num">${D(sc.mk)}</b><span>${sc.mk == null ? 'Add data' : 'Myo Score'}</span></div></div>
           <div class="sbars">${bars}</div></div>
         </section>
         <section class="card">
@@ -173,7 +173,7 @@
       </div>
 
       <button class="gc a-score" data-act="go" data-to="biology">
-        <span class="gc-h">${icon('biology', 15)} MK Score</span>
+        <span class="gc-h">${icon('biology', 15)} Myo Score</span>
         <span class="gc-bars gc-bars-l">${parts.map(([k, n, v]) => `<i style="height:${v == null ? 0 : v.toFixed(0)}%" title="${n} ${D(v, 0)}"><em>${k}</em></i>`).join('')}</span>
         <span class="gc-v"><b class="num">${D(sc.mk)}</b><small>/100</small></span>
       </button>

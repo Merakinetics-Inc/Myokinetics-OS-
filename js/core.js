@@ -86,7 +86,14 @@
     myo: '<circle cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r="1.3"/><path d="M12 7.8V3.5M12 16.2v4.3M7.8 12H3.5M16.2 12h4.3M9 9 6 6M15 15l3 3"/><circle cx="12" cy="3" r=".9"/><circle cx="21" cy="12" r=".9"/><circle cx="3" cy="12" r=".9"/><circle cx="12" cy="21" r=".9"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
     report: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 15.5h7M9 19h4"/>',
-    shield: '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>'
+    shield: '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
+    kitchen: '<path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M2 11h20M9 4c0 1.5 1 1.5 1 3M13 4c0 1.5 1 1.5 1 3"/>',
+    motion: '<circle cx="13" cy="4.5" r="2"/><path d="M8 21l3-6 3 2v5M11 15l1-5 4 2 3-1M12 10l-4 1-2 3"/><path d="M3 8h3M2 12h3"/>',
+    pathway: '<circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7.2 6h9.6M6.2 8l4.6 8M17.8 8l-4.6 8"/>',
+    evidence: '<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4"/><circle cx="11" cy="13" r="3"/><path d="M13.2 15.2 16 18"/>',
+    score: '<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 16l4-5"/><circle cx="12" cy="16" r="1.3"/>',
+    mode: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3"/><path d="M4 12h3M17 12h3"/>',
+    mind: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>'
   };
   const icon = (n, s = 20) => `<svg class="ico" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -284,7 +291,7 @@
     }
     return { status: 'bad', tier: 'out', label: 'Out of range', score: 35 };
   }
-  // Every part is null until there is data for it, and the MK Score averages only the parts that have data:
+  // Every part is null until there is data for it, and the Myo Score averages only the parts that have data:
   // a new member sees "—", never a made-up number.
   function scores(s) {
     const mk = s.markers.map((m) => ({ m, e: markerEval(m) }));
@@ -398,6 +405,7 @@
   const errors = [];
   try { JSON.parse(sessionStorage.getItem('myo-errors') || '[]').forEach((e) => errors.push(e)); } catch { /* none */ }
   function logError(kind, msg, where) {
+    if (/ResizeObserver loop/.test(String(msg))) return;   // a harmless browser notice, not an app error
     errors.push({ at: new Date().toISOString(), kind, msg: String(msg || '').slice(0, 240), where: String(where || '').slice(0, 120) });
     while (errors.length > 25) errors.shift();
     try { sessionStorage.setItem('myo-errors', JSON.stringify(errors)); } catch { /* memory only */ }
@@ -410,7 +418,7 @@
   /* ── OS kernel: store, bus, router ───────────────────────────────── */
   const listeners = {};
   const OS = {
-    VERSION: '1.0.0', BUILD: 29, errors, logError,
+    VERSION: '1.1.0', BUILD: 30, errors, logError,
     esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
     seed, blank, hasValue, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
     views: {}, order: [], acts: {}, changes: {},

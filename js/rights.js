@@ -16,7 +16,8 @@
       app: 'Myo', format: 'myo-export', formatVersion: 1, version: OS.VERSION, exportedAt: new Date().toISOString(),
       account: u ? { id: u.id, email: u.email || null } : null,
       note: 'Everything Myo stores for you. Progress photos and imaging scans stay in your browser and are not in this file.',
-      state: OS.state
+      state: OS.state,
+      mind: OS.mind ? OS.mind.read() : null
     }, null, 2);
   }
   async function download() {
@@ -33,7 +34,7 @@
     const st = j && j.format === 'myo-export' ? j.state : j;
     const ok = st && st.v === 4 && Array.isArray(st.markers) && st.profile && st.training && st.nutrition && st.life;
     if (!ok) throw new Error("That file isn't a Myo data file.");
-    return { state: st, at: j.exportedAt || st._savedAt || null };
+    return { state: st, at: j.exportedAt || st._savedAt || null, mind: j && j.format === 'myo-export' && j.mind && typeof j.mind === 'object' ? j.mind : null };
   }
 
   function card(s) {
@@ -79,6 +80,7 @@
   OS.act('rights-restore-go', () => {
     if (!pending) return;
     const st = pending.state; st._savedAt = Date.now();
+    if (pending.mind) { try { localStorage.setItem('myo-mind', JSON.stringify(pending.mind)); } catch { /* private mode */ } }
     OS.state = st; step = null; pending = null;
     OS.Persist.save(OS.state); OS.go('today'); OS.toast('Restored your data from the file');
   });

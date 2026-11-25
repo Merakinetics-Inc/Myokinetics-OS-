@@ -3,15 +3,15 @@
    with the cached copy when offline. Large models (anatomy meshes, MoveNet): cache first, they rarely change.
    Pinned libraries and fonts from CDNs: cache first (their URLs carry versions).
    Supabase, wearables, the Ingest API, Myo AI and anything else: straight to the network, never stored. */
-const VERSION = 'myo-1.0.0-29-202611250256';            // tools/build-site.ps1 appends the build time
+const VERSION = 'myo-1.1.0-30-202611251859';            // tools/build-site.ps1 appends the build time
 const APP = `${VERSION}-app`, MODELS = 'myo-models-v1', LIBS = 'myo-libs-v1';
 const SHELL = [
-  './', 'index.html', 'manifest.webmanifest', 'privacy.html', 'terms.html', 'oauth-done.html',
+  './', 'index.html', 'manifest.webmanifest', 'privacy.html', 'terms.html', 'oauth-done.html', 'share.html', 'js/share-view.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/favicon-32.png', 'icons/apple-touch-icon.png',
   'js/core.js', 'js/anatomy.js', 'js/health.js', 'js/train.js', 'js/videos.js', 'js/ar.js', 'js/scan.js', 'js/athlete.js',
   'js/enhance.js', 'js/longevity.js', 'js/wearables.js', 'js/imaging.js', 'js/function.js', 'js/augment.js',
   'js/anatomy3d.js', 'js/welcome.js', 'js/recovery.js', 'js/pt.js', 'js/sleep.js', 'js/looks.js', 'js/connect.js', 'js/avatar.js',
-  'js/gym.js', 'js/coach.js', 'js/system.js', 'js/hub.js', 'js/report.js', 'js/rights.js', 'js/palette.js', 'js/myoai.js',
+  'js/gym.js', 'js/coach.js', 'js/system.js', 'js/hub.js', 'js/report.js', 'js/rights.js', 'js/palette.js', 'js/myoai.js', 'js/kitchen.js', 'js/motion.js', 'js/biochem.js', 'js/research.js', 'js/score.js', 'js/mode.js', 'js/mind.js',
   'js/config.js', 'js/auth.js', 'js/look.js', 'js/boot.js'
 ];
 const LIB_HOSTS = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com', 'storage.googleapis.com'];

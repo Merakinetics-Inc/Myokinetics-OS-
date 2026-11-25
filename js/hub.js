@@ -1,5 +1,5 @@
 /* ═══ MYO — HUB: Myo's living cell at the centre, wired to every function of the app ═══
-   The cell is the real avatar (js/avatar.js). The ring around it shows the five MK Score systems.
+   The cell is the real avatar (js/avatar.js). The ring around it shows the five Myo Score systems.
    Circuit traces run from the membrane to six panels, and every node is a link to a page with a live
    status line from the member's data. Wide screens put three panels either side of the cell; narrow
    screens stack them under it on a bus trace. Traces are drawn from the panels' real positions, so they
@@ -9,14 +9,14 @@
   const { esc, icon, dayKey, targets, protocol } = OS;
 
   const CLUSTERS = [
-    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['body', 'biology', 'longevity', 'imaging', 'mirror'] },
-    { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'pt', 'function'] },
-    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'connect', 'profile', 'system'] },
-    { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'coach', 'report'] },
-    { k: 'train', side: 'r', code: 'TRN·05', label: 'Training', items: ['training', 'athlete', 'ar', 'machines', 'gym'] },
-    { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'life', 'enhance', 'looks', 'augment'] }
+    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['body', 'biology', 'biochem', 'longevity', 'imaging', 'mirror'] },
+    { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'pt', 'function', 'mind'] },
+    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'connect', 'evidence', 'profile', 'system'] },
+    { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'mode', 'score', 'coach', 'report'] },
+    { k: 'train', side: 'r', code: 'TRN·05', label: 'Training', items: ['training', 'motion', 'athlete', 'ar', 'machines', 'gym'] },
+    { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'kitchen', 'life', 'enhance', 'looks', 'augment'] }
   ];
-  // the five MK Score systems; colours match the flyer and stay the same in every scheme
+  // the five Myo Score systems; colours match the flyer and stay the same in every scheme
   const PARTS = [['biology', 'Biology', '#38bdf8'], ['recovery', 'Recovery', '#a78bfa'], ['training', 'Training', '#fb8a4a'], ['nutrition', 'Fuel', '#a3d65c'], ['life', 'Life', '#6b97ff']];
   const title = (n) => (OS.views[n] ? OS.views[n].title : n);
   const desc = (n) => (OS.navDesc && OS.navDesc[n]) || '';
@@ -30,6 +30,13 @@
       case 'today': { const items = protocol(s, sc), d = s.protocolDone[k] || {}, done = items.filter((i) => d[i.id]).length; return [`${done} of ${items.length} done today`, items.length && done >= items.length ? 'good' : 'muted']; }
       case 'coach': return sc.redFlags.length ? [`${sc.redFlags.length} red flag${sc.redFlags.length > 1 ? 's' : ''}: ask Myo`, 'bad'] : ['Ask by voice or text', 'good'];
       case 'report': return ['Print or save a summary', 'muted'];
+      case 'score': { const n = (s.scoreLog || []).length; return sc.mk == null ? ['Not scored yet', 'muted'] : [`${sc.mk} · ${sc.mk >= 90 ? 'Peak' : sc.mk >= 80 ? 'Optimal' : sc.mk >= 60 ? 'Strong' : 'Building'}${n > 1 ? ` · ${n} days` : ''}`, sc.mk >= 80 ? 'good' : 'warn']; }
+      case 'mode': return [sc.redFlags.length ? `${sc.redFlags.length} red flag · run a full scan` : 'Run a full system scan', sc.redFlags.length ? 'bad' : 'muted'];
+      case 'kitchen': { const k = s.kitchen, n = k && k.plan ? Object.keys(k.plan).length : 0; return [n ? `${n} days planned` : 'Recipes, plan, supplements', 'muted']; }
+      case 'mind': { const L = OS.mind && OS.mind.latest(); return L ? [`${L.label}: ${L.band}`, L.status] : ['Check in or take a self-check', 'muted']; }
+      case 'motion': { const m = s.motion && s.motion.log && s.motion.log.at(-1); return m ? [m.text, 'muted'] : ['Jump and movement screens', 'muted']; }
+      case 'biochem': { if (!OS.biochem) return [desc(n), 'muted']; const xs = OS.biochem.PATHS.map((p) => [p.name, OS.biochem.pathScore(s, p)]).filter((x) => x[1] != null).sort((a, b) => a[1] - b[1]); return xs.length ? [`Lowest: ${xs[0][0]} ${xs[0][1]}`, xs[0][1] >= 88 ? 'good' : 'warn'] : ['Add labs to map your pathways', 'muted']; }
+      case 'evidence': { const v = s.evidence; return v && v.last ? [`Checked ${OS.fmtDate(v.last.slice(0, 10))}`, 'muted'] : ['Check for new studies', 'muted']; }
       case 'body': return ['Nine systems in real 3D', 'muted'];
       case 'biology': {
         const n1 = sc.markers.filter((x) => x.e.score != null).length;
@@ -96,7 +103,7 @@
           <div class="hub-ringbox">${rings(sc)}<a class="hub-cell" href="#coach" aria-label="Talk to Myo"><canvas id="hub-av" aria-hidden="true"></canvas></a></div>
           <div class="hub-meta"><b>MYO</b><span class="hub-st" data-st="${OS.Avatar ? OS.Avatar.state : 'idle'}"><i></i>${OS.Avatar ? OS.Avatar.label() : 'Online'}</span></div>
           <ul class="hub-parts" aria-label="Your five systems">${PARTS.map(([k, l, c]) => `<li><i style="background:${c}"></i>${l} <b>${OS.dash(sc.parts[k] == null ? null : Math.round(sc.parts[k]))}</b></li>`).join('')}</ul>
-          <div class="hub-mk"><span>MK Score</span><b class="num">${OS.dash(sc.mk)}</b><span>Readiness</span><b class="num">${OS.dash(sc.readiness)}</b></div>
+          <div class="hub-mk"><span>Myo Score</span><b class="num">${OS.dash(sc.mk)}</b><span>Readiness</span><b class="num">${OS.dash(sc.readiness)}</b></div>
           <a class="btn hub-talk" href="#coach">${icon('coach', 16)}<span>Talk to Myo</span></a>
         </div>
         <nav class="hub-col hub-r" aria-label="Your day, training and life">${groups.filter((c) => c.side === 'r').map(panel).join('')}</nav>

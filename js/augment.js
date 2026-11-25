@@ -85,7 +85,7 @@
     const integ = clamp(['prosthesis_upper', 'prosthesis_lower', 'osseo', 'cochlear', 'cgm', 'neural', 'nfc'].filter(on).length ? 1 : 0, 0, 1);
     const list = [
       { id: 0, name: 'Baseline', p: 1, d: 'Every member starts here: measured, scored, protocol running.' },
-      { id: 1, name: 'Peak Human', p: peak, d: 'Biology and training at the top of human range: MK Score 90, half your markers at peak, elite fitness for age, strong muscle.' },
+      { id: 1, name: 'Peak Human', p: peak, d: 'Biology and training at the top of human range: Myo Score 90, half your markers at peak, elite fitness for age, strong muscle.' },
       { id: 2, name: 'Exo-Augmented', p: exo, d: 'Machines in the loop: wearable exo plus Merakinetics machines and AR-Vision coaching your every rep.' },
       { id: 3, name: 'Neural-Linked', p: neural, d: 'Your brain state in the loop: EEG headband plus cognition tests. Implanted BCIs only through clinical trials.' },
       { id: 4, name: 'Integrated', p: integ, d: 'Devices inside the body, fitted by clinical teams or licensed professionals and paired with Myo. Never a goal for its own sake.' }

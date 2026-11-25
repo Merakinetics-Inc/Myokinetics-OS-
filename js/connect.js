@@ -116,6 +116,11 @@
     if (x.type === 'observation') return [obsItem({ system: x.code && x.code.system, code: x.code && x.code.code, display: x.code && x.code.display, value: x.value, unit: x.unit, at: x.at }, s0)];
     if (x.type === 'session') { const min = +x.minutes; return [{ kind: 'session', sk: String(x.kind || '').toLowerCase(), device: x.device || '', mode: x.mode || (x.settings && x.settings.pulse_hz === 40 ? 'gamma' : x.settings && x.settings.pulse_hz === 10 ? 'alpha' : ''), min, at: x.start || null, d: isoDay(x.start), settings: x.settings || null, ratings: x.ratings || null, src: s0, err: !(min > 0 && min <= 600) ? 'minutes must be 1–600' : !x.kind ? 'kind is required' : null }]; }
     if (x.type === 'sleep') return [{ kind: 'sleep', d: x.date || isoDay(x.wake_at), bed: x.bed || null, wake: x.wake || null, total: +x.total_min || null, score: x.score ?? null, hrv: x.hrv ?? null, rhr: x.rhr ?? null, q: x.quality ?? null, src: s0, err: !x.date ? 'date is required' : !(x.total_min || (x.bed && x.wake)) ? 'total_min or bed and wake are required' : null }];
+    if (x.type === 'meal') {   // keep in step with mealItem() in supabase/functions/ingest/normalize.ts
+      const n = (v) => (v == null || v === '' ? null : Number(v)), sv = n(x.servings) ?? 1, kcal = n(x.kcal), p = n(x.protein_g) ?? 0, c = n(x.carbs_g) ?? 0, f = n(x.fat_g) ?? 0, r1 = (v) => Math.round(v * sv * 10) / 10;
+      const err = !x.name || !String(x.name).trim() ? 'name is required' : kcal == null || !Number.isFinite(kcal) || kcal < 0 || kcal > 5000 ? 'kcal must be 0–5000' : [p, c, f].some((g) => !Number.isFinite(g) || g < 0 || g > 500) ? 'protein_g, carbs_g and fat_g must be 0–500' : !(sv > 0 && sv <= 10) ? 'servings must be more than 0 and at most 10' : null;
+      return [{ kind: 'meal', name: String(x.name || '').slice(0, 80), d: (x.at || x.date) ? isoDay(x.at || x.date) : dayKey(), at: x.at || null, kcal: kcal == null ? null : Math.round(kcal * sv), p: r1(p), c: r1(c), f: r1(f), servings: sv, url: typeof x.recipe_url === 'string' && /^https:\/\//.test(x.recipe_url) ? x.recipe_url : null, src: s0, err }];
+    }
     return [{ kind: '?', err: `unknown type "${x.type}"` }];
   }
   function fromFhir(r, src) {
@@ -182,6 +187,7 @@
     if (it.kind === 'observation' && it.vital) { const [n, u] = VITALS[it.vital]; const c = convert(it.vital, it.unit, u, it.value); return c.v == null ? { ok: false, to: c.err } : { ok: true, to: `Vitals › ${n}`, v: c.v, u, note: c.note }; }
     if (it.kind === 'session') { if (it.sk === 'pbm' || it.sk === 'photobiomodulation') return { ok: true, to: 'Integrations › Vielight sessions', v: it.min, u: 'min' }; const k = REC_K[it.sk]; return k ? { ok: true, to: `Recovery › ${k}`, v: it.min, u: 'min' } : { ok: false, to: `unknown session kind "${it.sk}"` }; }
     if (it.kind === 'sleep') return { ok: true, to: 'Sleep › diary', v: it.total, u: 'min' };
+    if (it.kind === 'meal') return { ok: true, to: 'Fuel › meals', v: it.kcal, u: 'kcal' };
     return { ok: false, to: 'not supported' };
   }
   function applyItems(items, srcName) {
@@ -208,6 +214,10 @@
           const st = OS.sleep ? OS.sleep.nightStats(n0) : null;
           s.sleep.diary = (s.sleep.diary || []).filter((x) => x.d !== it.d); s.sleep.diary.push(st ? { ...n0, ...st } : { ...n0, tst: it.total });
         }
+        else if (it.kind === 'meal') {
+          const day = (s.nutrition.meals[it.d] = s.nutrition.meals[it.d] || []);
+          day.push({ id: OS.uid(), name: it.name, kcal: it.kcal || 0, p: it.p || 0, c: it.c || 0, f: it.f || 0, src: it.src || 'partner', url: it.url || null });
+        }
       });
       M.readings = M.readings.slice(-500); M.sessions = M.sessions.slice(-500);
       M.audit.unshift({ at: new Date().toISOString(), src: srcName, n, kinds: [...new Set(items.filter((i) => !i.err).map((i) => i.kind))] }); M.audit = M.audit.slice(0, 40);
@@ -232,6 +242,7 @@
   // server item → the shape applyItems takes
   const fromServer = (x) => x.kind === 'observation' ? { kind: 'observation', marker: x.marker, vital: x.vital, value: x.value, unit: x.unit, d: x.d, at: x.at, display: x.display, code: x.code, src: x.src || x.source }
     : x.kind === 'session' ? { kind: 'session', sk: x.sk, device: x.device, mode: x.mode, min: x.min, d: x.d, at: x.at, ratings: x.ratings, src: x.src || x.source }
+    : x.kind === 'meal' ? { kind: 'meal', name: x.name, d: x.d, at: x.at, kcal: x.kcal, p: x.p, c: x.c, f: x.f, servings: x.servings, url: x.url, src: x.src || x.source }
     : { kind: 'sleep', d: x.d, bed: x.bed, wake: x.wake, total: x.total, score: x.score, hrv: x.hrv, rhr: x.rhr, q: x.q, src: x.src || x.source };
   async function pullInbox(manual) {
     if (!apiReady() || R.pulling) return;
@@ -333,6 +344,7 @@
     vital: { items: [{ type: 'observation', code: { system: 'myo', code: 'rhr' }, value: 52, unit: 'bpm', at: '2026-11-22T06:40:00Z', source: { vendor: 'Polar', device: 'H10' } }, { type: 'observation', code: { system: 'http://loinc.org', code: '29463-7' }, value: 179.4, unit: 'lb', at: '2026-11-22T06:45:00Z', source: { vendor: 'Withings' } }] },
     session: { items: [{ type: 'session', kind: 'pbm', device: 'Vielight Neuro Gamma 4', mode: 'gamma', start: '2026-11-22T07:30:00Z', minutes: 20, settings: { wavelength_nm: 810, pulse_hz: 40 }, ratings: { before: { focus: 3, calm: 3 }, after: { focus: 4, calm: 4 } }, source: { vendor: 'Vielight' } }, { type: 'session', kind: 'sauna', start: '2026-11-22T18:00:00Z', minutes: 15, source: { vendor: 'Clinic' } }] },
     sleep: { type: 'sleep', date: '2026-11-22', bed: '23:05', wake: '06:50', total_min: 412, score: 84, hrv: 61, rhr: 52, quality: 4, source: { vendor: 'Example sleep tracker' } },
+    meal: { type: 'meal', name: 'Chicken, rice and greens', at: '2026-11-24T12:30:00-05:00', servings: 1, kcal: 640, protein_g: 52, carbs_g: 68, fat_g: 16, recipe_url: 'https://example.com/recipes/chicken-rice', source: { vendor: 'Example meal-prep kitchen' } },
     fhir: { resourceType: 'Bundle', type: 'collection', entry: [{ resource: { resourceType: 'Observation', status: 'final', code: { coding: [{ system: 'http://loinc.org', code: '4548-4', display: 'Hemoglobin A1c' }] }, valueQuantity: { value: 5.3, unit: '%' }, effectiveDateTime: '2026-11-18' } }, { resource: { resourceType: 'Observation', status: 'final', code: { coding: [{ system: 'http://loinc.org', code: '85354-9', display: 'Blood pressure panel' }] }, component: [{ code: { coding: [{ system: 'http://loinc.org', code: '8480-6' }] }, valueQuantity: { value: 118, unit: 'mm[Hg]' } }, { code: { coding: [{ system: 'http://loinc.org', code: '8462-4' }] }, valueQuantity: { value: 76, unit: 'mm[Hg]' } }], effectiveDateTime: '2026-11-21T07:00:00Z' } }] },
     hl7: 'MSH|^~\\&|LAB|EXAMPLE|MYO|MK|202611180915||ORU^R01|MSG0001|P|2.5.1\rOBR|1||A1|24331-1^Lipid panel^LN|||202611180800\rOBX|1|NM|2085-9^HDL Cholesterol^LN||58|mg/dL|>40|N|||F\rOBX|2|NM|2571-8^Triglyceride^LN||1.1|mmol/L|<1.7|N|||F\rOBX|3|NM|1989-3^Vitamin D 25-OH^LN||88|nmol/L|75-250|N|||F',
     csv: 'date,code,value,unit\n2026-11-18,hdl,58,mg/dL\n2026-11-18,vitd,41,ng/mL\n2026-11-22,rhr,52,bpm',
@@ -343,6 +355,7 @@
     ['POST', '/v1/observations', 'Vitals from devices (Myo codes or LOINC; pounds convert to kg)', 'vital', 'observations:write', 'application/json'],
     ['POST', '/v1/sessions', 'Device and therapy sessions: photobiomodulation, sauna, cold, cryo, HBOT, red light', 'session', 'sessions:write', 'application/json'],
     ['POST', '/v1/sleep', 'Nightly sleep summaries from any tracker', 'sleep', 'sleep:write', 'application/json'],
+    ['POST', '/v1/meals', 'Meals from meal-prep companies and food apps: calories and macros per serving', 'meal', 'meals:write', 'application/json'],
     ['POST', '/v1/fhir', 'FHIR R4 Bundle or Observation with LOINC codes, panels included', 'fhir', 'fhir:write', 'application/fhir+json'],
     ['POST', '/v1/hl7', 'HL7 v2 ORU^R01 lab messages; identifying segments (PID) are dropped', 'hl7', 'hl7:write', 'text/plain'],
     ['POST', '/v1/csv', 'CSV of results (date, code, value, unit) or sessions (date, kind, minutes)', 'csv', 'csv:write', 'text/csv']
@@ -441,8 +454,8 @@
         <p class="fine">Myo decodes the Bluetooth SIG health profiles (IEEE-11073 values) on this device. Proprietary devices that skip these profiles need their vendor's API.</p></section>`;
   }
 
-  const SCOPE_TXT = { 'observations:write': 'Lab results and vitals', 'sessions:write': 'Therapy sessions', 'sleep:write': 'Sleep', 'fhir:write': 'FHIR', 'hl7:write': 'HL7 lab messages', 'csv:write': 'CSV files' };
-  const EVT_TXT = { 'score.updated': 'MK Score changes', 'marker.out_of_range': 'A marker goes out of range', 'session.logged': 'A light session is logged' };
+  const SCOPE_TXT = { 'observations:write': 'Lab results and vitals', 'sessions:write': 'Therapy sessions', 'sleep:write': 'Sleep', 'meals:write': 'Meals', 'fhir:write': 'FHIR', 'hl7:write': 'HL7 lab messages', 'csv:write': 'CSV files' };
+  const EVT_TXT = { 'score.updated': 'Myo Score changes', 'marker.out_of_range': 'A marker goes out of range', 'session.logged': 'A light session is logged' };
   const when = (t) => (t ? new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—');
   function tRemote() {
     if (!apiBase()) return `<section class="card"><div class="card-h"><h2>Connect a system</h2>${pill('muted', 'Needs your Supabase project')}</div><p class="small">Partner systems send data with integration keys you create here. Set up member sign-in (Profile) on the hosted Myo and deploy the API with <code>supabase/deploy.ps1</code>; then keys and webhooks appear here.</p></section>`;
