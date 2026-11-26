@@ -424,7 +424,7 @@
   /* ── OS kernel: store, bus, router ───────────────────────────────── */
   const listeners = {};
   const OS = {
-    VERSION: '1.1.1', BUILD: 31, errors, logError,
+    VERSION: '1.2.0', BUILD: 32, errors, logError,
     esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
     seed, blank, hasValue, plausible, PLAUSIBLE, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
     views: {}, order: [], acts: {}, changes: {},

@@ -2038,6 +2038,51 @@ pre.code { margin: 0; padding: 12px; border-radius: var(--r-sm); background: var
 .mind-score b { font: 700 32px var(--f-mono); margin-right: 8px; }
 .mind-strats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 12px; margin-bottom: 14px; } .mind-strats h3 { margin: 0; font-size: 14.5px; } .mind-strats p { margin: 0; }
 .mind-guides { display: flex; flex-direction: column; gap: 10px; } .mind-guides summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; } .mind-guides p { margin: 8px 0 0; }
+
+/* ══ Lifespan dashboard (js/lifespan.js): reference categorical slots 1–3, stepped for dark ══ */
+.ls { --ls-myo: #2a78d6; --ls-pheno: #eb6834; --ls-fit: #1baf7a; gap: 14px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ls { --ls-myo: #3987e5; --ls-pheno: #d95926; --ls-fit: #199e70; } }
+:root[data-theme="dark"] .ls { --ls-myo: #3987e5; --ls-pheno: #d95926; --ls-fit: #199e70; }
+.ls .card-h { align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+.ls-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: 10px; }
+@media (max-width: 430px) { .ls-tile b { font-size: 21px; } .ls-tile { padding: 9px 10px; } }
+.ls-tile { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ls-tile span { font-size: 12px; color: var(--muted); } .ls-tile b { font: 700 24px var(--f-mono); color: var(--fg); } .ls-tile em { font-style: normal; font-size: 12px; color: var(--muted); }
+.ls-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); } .ls-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ls-chart { position: relative; width: 100%; min-height: 200px; }
+.ls-chart[hidden], .ls-tablewrap[hidden] { display: none; }
+.ls-svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.ls-grid line { stroke: var(--line); stroke-width: 1; }
+.ls-grid text, .ls-axis text { fill: var(--muted); font-size: 11.5px; font-family: var(--f-mono); }
+.ls-axis line { stroke: var(--line-2); }
+.ls-today { stroke: var(--muted); stroke-dasharray: 3 4; } .ls-today-t { fill: var(--muted); font-size: 11px; }
+.ls-cal { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 6 4; } .ls-cal.ahead { opacity: .4; }
+.ls-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ls-myo .ls-line { stroke: var(--ls-myo); } .ls-pheno .ls-line { stroke: var(--ls-pheno); } .ls-fit .ls-line { stroke: var(--ls-fit); }
+.ls-pt { stroke: var(--rail); stroke-width: 2; paint-order: stroke; }
+.ls-myo .ls-pt, .ls-myo-f { fill: var(--ls-myo); } .ls-pheno .ls-pt, .ls-pheno-f { fill: var(--ls-pheno); } .ls-fit .ls-pt, .ls-fit-f { fill: var(--ls-fit); }
+.ls-pheno .ls-pt.rec, .ls-pt.rec.ls-pheno-f { fill: var(--rail); stroke: var(--ls-pheno); }
+.ls-lab { font-size: 12px; font-weight: 600; fill: var(--fg); } .ls-labv { font: 600 12px var(--f-mono); fill: var(--fg); }
+.ls-lead { stroke-width: 1.5; } .ls-lead-myo { stroke: var(--ls-myo); } .ls-lead-pheno { stroke: var(--ls-pheno); } .ls-lead-fit { stroke: var(--ls-fit); } .ls-lead-cal { stroke: var(--muted); }
+.ls-cross { stroke: var(--fg); stroke-width: 1; opacity: .35; }
+.ls-tip { position: absolute; top: 6px; z-index: 3; pointer-events: none; background: var(--rail); border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 2px; min-width: 160px; }
+.ls-tip[hidden] { display: none; }
+.ls-sw { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.ls-sw.ls-myo-f { background: var(--ls-myo); } .ls-sw.ls-pheno-f { background: var(--ls-pheno); } .ls-sw.ls-fit-f { background: var(--ls-fit); }
+.ls-sub { margin: 6px 0 0; font-size: 14px; }
+.ls-minis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+.ls-mini { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ls-mini header { display: flex; justify-content: space-between; gap: 8px; align-items: center; } .ls-mini header b { font-size: 13.5px; }
+.ls-mini-v { margin: 0; } .ls-mini-v b { font: 700 20px var(--f-mono); }
+.ls-mini svg { width: 100%; height: auto; display: block; }
+.ls-band { fill: var(--good); opacity: .14; }
+.ls-mini-axis { stroke: var(--line-2); } .ls-mini-t { fill: var(--muted); font-size: 10.5px; }
+.ls-mini-line { fill: none; stroke: var(--muted); stroke-width: 2; }
+.ls-mini-pt { fill: var(--muted); stroke: var(--rail); stroke-width: 2; } .ls-mini-pt.last { fill: var(--ls-myo); }
+.ls-mini-o { margin: 0; }
+/* selected state for tab bars and toggles that mark it with aria (Kitchen, Mind, Motion Lab, this toggle) */
+.seg button[aria-selected="true"], .seg button[aria-pressed="true"] { background: linear-gradient(135deg, var(--btn), var(--btn-2)); color: var(--btn-fg); font-weight: 600; }
+:root[data-scheme="clinical"] .seg button[aria-selected="true"], :root[data-scheme="clinical"] .seg button[aria-pressed="true"] { background: var(--btn); color: var(--btn-fg); }
 /* ══ Data rights, this app, offline, skip link ══ */
 .rights-file { cursor: pointer; position: relative; }
 .rights-file:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -2112,6 +2157,7 @@ pre.code { margin: 0; padding: 12px; border-radius: var(--r-sm); background: var
 <script src="js/score.js"></script>
 <script src="js/mind.js"></script>
 <script src="js/mode.js"></script>
+<script src="js/lifespan.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/look.js"></script>

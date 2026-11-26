@@ -62,13 +62,20 @@
   const mk = (s, id) => s.markers.find((m) => m.id === id);
 
   // Levine 2018 PhenoAge. Inputs in US units, converted to the model's units.
-  function phenoAge(s) {
-    const L = ensure(s).ph, glu = mk(s, 'glu'), crp = mk(s, 'crp');
-    if (!glu || !crp || PH.some(([k]) => L[k] == null || isNaN(L[k]))) return null;
-    const xb = -19.907 - 0.0336 * (L.alb * 10) + 0.0095 * (L.cr * 88.4) + 0.1953 * (glu.value / 18.016) + 0.0954 * Math.log(Math.max(0.01, crp.value) / 10)
-      - 0.0120 * L.lym + 0.0268 * L.mcv + 0.3306 * L.rdw + 0.00188 * L.alp + 0.0554 * L.wbc + 0.0804 * s.profile.age;
+  const phenoReady = (s) => !PH.some(([k]) => ensure(s).ph[k] == null || isNaN(ensure(s).ph[k]));
+  // the model itself, for any day: glucose mg/dL, hs-CRP mg/L and age at that day (the year-to-date chart rebuilds past points)
+  function phenoCalc(L, gluMg, crpMgL, age) {
+    if (PH.some(([k]) => L[k] == null || isNaN(L[k])) || !Number.isFinite(Number(gluMg)) || !Number.isFinite(Number(crpMgL)) || age == null) return null;
+    const xb = -19.907 - 0.0336 * (L.alb * 10) + 0.0095 * (L.cr * 88.4) + 0.1953 * (gluMg / 18.016) + 0.0954 * Math.log(Math.max(0.01, crpMgL) / 10)
+      - 0.0120 * L.lym + 0.0268 * L.mcv + 0.3306 * L.rdw + 0.00188 * L.alp + 0.0554 * L.wbc + 0.0804 * age;
     const M = 1 - Math.exp(-Math.exp(xb) * (Math.exp(120 * 0.0076927) - 1) / 0.0076927);
-    return 141.50225 + Math.log(-0.00553 * Math.log(1 - M)) / 0.090165;
+    const v = 141.50225 + Math.log(-0.00553 * Math.log(1 - M)) / 0.090165;
+    return Number.isFinite(v) ? v : null;
+  }
+  function phenoAge(s) {
+    const glu = mk(s, 'glu'), crp = mk(s, 'crp');
+    if (!glu || !crp || !OS.hasValue(glu) || !OS.hasValue(crp) || !OS.plausible('glu', glu.value) || !OS.plausible('crp', crp.value)) return null;
+    return phenoCalc(ensure(s).ph, Number(glu.value), Number(crp.value), s.profile.age);
   }
   // VO2max: measured > athlete benchmark > Uth estimate from resting HR
   function vo2Of(s) {
@@ -133,6 +140,7 @@
 
   OS.register('longevity', {
     title: 'Longevity', icon: 'longevity',
+    mount(root, s, sc) { return OS.lifespan ? OS.lifespan.mount(root, s, sc) : undefined; },
     render(s, sc) {
       const G = ensure(s), S = summary(s, sc), age = s.profile.age, P = S.pillars;
       const inProto = new Set((s.customProtocol || []).map((i) => i.id));
@@ -169,6 +177,7 @@
             <div><span>Peak markers</span><b class="num">${sc.peak}</b><em>of ${sc.markers.length}</em></div></div>
         </div>
       </section>
+      ${OS.lifespan ? OS.lifespan.card(s, sc) : ''}
       <div class="grid g-2-1">
         <section class="card"><div class="card-h"><h2>Healthspan pillars</h2><span class="muted small">0–100 · aim for 85+</span></div><div class="lg-pils">${pillarRows}</div></section>
         <section class="card"><div class="card-h"><h2>Your numbers</h2></div>
@@ -253,5 +262,5 @@ Member data (JSON): ${JSON.stringify(data)}`;
     OS.update((st) => { ensure(st).plan = { text, at: new Date().toISOString() }; });
   });
 
-  OS.longevity = { summary, phenoAge, fitnessAge, vo2Target };
+  OS.longevity = { summary, phenoAge, phenoCalc, phenoReady, fitnessAge, vo2Target, ensure };
 })();
