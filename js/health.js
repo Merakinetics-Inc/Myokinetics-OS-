@@ -45,9 +45,11 @@
     });
   }
   // urgent-care alert for dangerous values; the only place the OS sends you out
-  const redFlagBanner = (sc) => sc.redFlags && sc.redFlags.length ? `<div class="redflag" role="alert"><div class="rf-h">${icon('biology', 18)}<b>Red flag: get in-person care today</b></div>
+  const redFlagBanner = (sc) => (sc.redFlags && sc.redFlags.length ? `<div class="redflag" role="alert"><div class="rf-h">${icon('biology', 18)}<b>Red flag: get in-person care today</b></div>
     <ul>${sc.redFlags.map((f) => `<li><b>${esc(f.name)} ${f.value} ${esc(f.unit)}.</b> ${esc(f.why)}.</li>`).join('')}</ul>
-    <p>The OS has stopped optimising ${sc.redFlags.length > 1 ? 'these markers' : 'this marker'} until a clinician has seen the result. Go to urgent care or call your local emergency number if you feel unwell.</p></div>` : '';
+    <p>The OS has stopped optimising ${sc.redFlags.length > 1 ? 'these markers' : 'this marker'} until a clinician has seen the result. Go to urgent care or call your local emergency number if you feel unwell.</p></div>` : '') + suspectBanner(sc);
+  // a value no real result can take is set aside: usually an ID or phone number read from the report
+  const suspectBanner = (sc) => sc.suspect && sc.suspect.length ? `<div class="banner warn" role="note"><b>${sc.suspect.length > 1 ? `${sc.suspect.length} results look wrong` : 'A result looks wrong'}.</b> ${sc.suspect.map(({ m }) => `${esc(m.name)} ${esc(Number(m.value).toLocaleString())} ${esc(m.unit)}`).join('; ')} ${sc.suspect.length > 1 ? 'are' : 'is'} outside any possible range, so Myo has set ${sc.suspect.length > 1 ? 'them' : 'it'} aside: not scored and not a red flag. This usually means an ID or reference number was read from the report. <a href="#biology">Correct it on Biology</a> with the value from your report.</div>` : '';
   const termsCard = (s) => s.termsAccepted ? '' : `<div class="terms-card" role="note"><div><b>How Myo works</b><p>${esc(OS.TERMS)}</p></div><button class="btn" data-act="terms-accept">Got it</button></div>`;
   OS.act('terms-accept', () => OS.update((s) => { s.termsAccepted = new Date().toISOString(); }, { keepSample: true }));
   const fmtR = (r) => r[0] == null ? `< ${r[1]}` : r[1] == null ? `> ${r[0]}` : `${r[0]}–${r[1]}`;
@@ -307,6 +309,7 @@
   OS.act('marker-save', (form) => {
     const v = parseFloat(form.querySelector('input').value), id = form.dataset.id; editId = null;
     if (!isFinite(v)) return OS.render();
+    if (!OS.plausible(id, v)) { const r = OS.PLAUSIBLE[id]; OS.toast(`That value isn't possible for this marker${r ? ` (${r[0]}–${r[1]})` : ''}. Check the report.`); return OS.render(); }
     OS.update((s) => { const m = s.markers.find((x) => x.id === id); m.value = v; const k = dayKey(); const h = m.history; if (h.length && h[h.length - 1][0] === k) h[h.length - 1][1] = v; else h.push([k, v]); });
     OS.toast('Marker updated. Protocol recalculated.');
   });
@@ -334,7 +337,7 @@
   }
   OS.pdfToLines = pdfToLines; // shared with the Sleep page's report reader
   // "Vitamin D, 25-OH  38  ng/mL  30-100" → "Vitamin D, 25-OH, 38"
-  const rowToPair = (line) => { const m = line.match(/^([A-Za-z][A-Za-z0-9 ()\-\/,.%+]*?[A-Za-z)])\s*[:,]?\s+([<>]?\s*\d+(?:\.\d+)?)(?:\s|$)/); return m ? `${m[1].replace(/,\s*$/, '')}, ${m[2].replace(/[<>\s]/g, '')}` : null; };
+  const rowToPair = (line) => { const m = line.match(/^([A-Za-z][A-Za-z0-9 ()\-\/,.%+]*?[A-Za-z)])\s*[:,]?\s+([<>]?\s*\d{1,6}(?:\.\d+)?)(?:\s|$)/); return m ? `${m[1].replace(/,\s*$/, '')}, ${m[2].replace(/[<>\s]/g, '')}` : null; };
   OS.change('labs-file', async (el) => {
     const f = el.files && el.files[0]; if (!f) return;
     const ta = document.getElementById('labs-text');
@@ -349,25 +352,33 @@
   const norm = (x) => x.toLowerCase().replace(/[^a-z0-9]/g, '');
   OS.act('labs-import', (form) => {
     const text = form.querySelector('textarea').value, date = form.querySelector('input[type=date]').value || dayKey();
-    const hits = [], miss = [];
+    const hits = [], miss = [], odd = [];
+    // a short code (ALT, CK, TSH) must stand as its own word in the label: "Health ID" contains "alt" but isn't ALT
+    const word = (label, w) => {
+      if (w.length > 4) return norm(label).includes(w);
+      const t = label.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);   // "LDL-C (calc)" → ldl, c, calc: "ldl"+"c" spells ldlc
+      for (let i = 0; i < t.length; i++) { let acc = ''; for (let j = i; j < t.length && acc.length < w.length; j++) { acc += t[j]; if (acc === w) return true; } }
+      return false;
+    };
     OS.update((s) => {
       text.split(/\r?\n/).forEach((line) => {
         // the value must be a clean number; otherwise read the whole row ("Vitamin D, 25-Hydroxy 41 ng/mL 30-100")
-        const clean = (p) => /^[<>]?\s*\d+(\.\d+)?$/.test(p);
+        const clean = (p) => /^[<>]?\s*\d{1,6}(\.\d+)?$/.test(p);
         let parts = line.split(/[,\t;]/).map((p) => p.trim()).filter(Boolean);
         if (parts.length < 2 || !parts.slice(1).some(clean)) { const pr = rowToPair(line.replace(/[\t;]/g, ' ')); if (!pr) return; const i = pr.lastIndexOf(', '); parts = [pr.slice(0, i), pr.slice(i + 2)]; }
         const val = parseFloat((parts.slice(1).find(clean) || '').replace(/[<>\s]/g, ''));
         if (!isFinite(val)) return;
         const key = norm(parts[0]);
         const m = s.markers.find((mm) => norm(mm.name) === key || norm(mm.id) === key || mm.aliases.some((a) => norm(a) === key)) ||
-                  s.markers.find((mm) => key.length > 3 && (norm(mm.name).includes(key) || key.includes(norm(mm.name)))) ||
+                  s.markers.find((mm) => key.length > 3 && (norm(mm.name).includes(key) || word(parts[0], norm(mm.name)))) ||
                   s.markers.map((mm) => [mm, Math.max(0, ...mm.aliases.map((a) => norm(a)).filter((a) => a.length > 3 && key.includes(a)).map((a) => a.length))]).filter((x) => x[1]).sort((a, b) => b[1] - a[1]).map((x) => x[0])[0];
         if (!m) { miss.push(parts[0]); return; }
+        if (!OS.plausible(m.id, val)) { odd.push(`${m.name} ${val}`); return; }
         m.value = val; m.history.push([date, val]); m.history.sort((a, b) => a[0].localeCompare(b[0])); hits.push(m.name);
       });
       if (hits.length) { s.labsDate = !s.labsDate || date > s.labsDate ? date : s.labsDate; s.fresh = false; s.sample = false; s.labsImported = date; }
     });
-    OS.toast(hits.length ? `Imported ${hits.length} marker${hits.length > 1 ? 's' : ''}${miss.length ? `. Not matched: ${miss.slice(0, 3).join(', ')}` : ''}.` : 'No markers matched. Use one "name, value" per line.');
+    OS.toast(hits.length ? `Imported ${hits.length} marker${hits.length > 1 ? 's' : ''}${odd.length ? `. Skipped as impossible: ${odd.slice(0, 2).join(', ')}` : ''}${miss.length ? `. Not matched: ${miss.slice(0, 3).join(', ')}` : ''}.` : odd.length ? `Nothing imported: ${odd.slice(0, 2).join(', ')} can't be a real result. Check the values.` : 'No markers matched. Use one "name, value" per line.');
   });
 
   /* ═══ FUEL ════════════════════════════════════════════════════════ */

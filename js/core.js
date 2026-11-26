@@ -265,14 +265,19 @@
     b12: [150, null, 'B12 this low can cause nerve damage'], vitd: [10, null, 'Vitamin D this low needs assessment'],
     crp: [null, 50, 'Inflammation this high can mean an acute infection']
   };
+  // The widest values a real result can take (beyond the most extreme lab reports). Anything outside is an ID, a phone
+  // number or a typo read into the wrong field: set aside for the member to correct, never scored, never a red flag.
+  // Keep in step with PLAUSIBLE in supabase/functions/ingest/normalize.ts.
+  const PLAUSIBLE = { apob: [5, 400], ldl: [5, 1000], hdl: [2, 250], tg: [5, 10000], lpa: [0, 1000], a1c: [2, 25], glu: [5, 2000], ins: [0, 1000], crp: [0, 500], hcy: [0, 500], tt: [0, 5000], ft: [0, 500], cort: [0, 200], tsh: [0, 1000], ft3: [0, 50], vitd: [0, 500], ferr: [0, 100000], b12: [0, 20000], mg: [0.5, 20], o3: [0, 30], alt: [0, 20000], egfr: [0, 250], hgb: [1, 30], ck: [0, 1000000] };
+  const plausible = (id, v) => { const x = Number(v), r = PLAUSIBLE[id]; return Number.isFinite(x) && (!r || (x >= r[0] && x <= r[1])); };
   function redFlags(s) {
     const out = [];
-    s.markers.forEach((m) => { const d = DANGER[m.id]; if (!d || !hasValue(m)) return; const v = Number(m.value); if ((d[0] != null && v < d[0]) || (d[1] != null && v > d[1])) out.push({ id: m.id, name: m.name, value: v, unit: m.unit, why: d[2] }); });
+    s.markers.forEach((m) => { const d = DANGER[m.id]; if (!d || !hasValue(m) || !plausible(m.id, m.value)) return; const v = Number(m.value); if ((d[0] != null && v < d[0]) || (d[1] != null && v > d[1])) out.push({ id: m.id, name: m.name, value: v, unit: m.unit, why: d[2] }); });
     const vt = s.vitals || {};
     const el = (s.enhance && s.enhance.labs) || {};
-    if (el.hct >= 60) out.push({ id: 'hct', name: 'Hematocrit', value: el.hct, unit: '%', why: 'Blood this thick sharply raises the risk of clots and stroke' });
-    if (el.sbp >= 180 || el.dbp >= 120) out.push({ id: 'bp', name: 'Blood pressure', value: `${el.sbp || '?'}/${el.dbp || '?'}`, unit: 'mmHg', why: 'Blood pressure this high is a hypertensive crisis' });
-    if (vt.rhr && (vt.rhr > 120 || vt.rhr < 35)) out.push({ id: 'rhr', name: 'Resting heart rate', value: vt.rhr, unit: 'bpm', why: 'A resting heart rate this far out of range needs assessment' });
+    if (el.hct >= 60 && el.hct <= 85) out.push({ id: 'hct', name: 'Hematocrit', value: el.hct, unit: '%', why: 'Blood this thick sharply raises the risk of clots and stroke' });
+    if ((el.sbp >= 180 && el.sbp <= 320) || (el.dbp >= 120 && el.dbp <= 220)) out.push({ id: 'bp', name: 'Blood pressure', value: `${el.sbp || '?'}/${el.dbp || '?'}`, unit: 'mmHg', why: 'Blood pressure this high is a hypertensive crisis' });
+    if (vt.rhr && vt.rhr >= 20 && vt.rhr <= 250 && (vt.rhr > 120 || vt.rhr < 35)) out.push({ id: 'rhr', name: 'Resting heart rate', value: vt.rhr, unit: 'bpm', why: 'A resting heart rate this far out of range needs assessment' });
     return out;
   }
   const TERMS = 'Myo, built on Myokinetics OS, is a physician-optional performance and wellness system. It measures, scores and optimises your physiology toward peak ranges and runs your protocol for you. It does not diagnose or treat disease, and it does not start, stop or dose prescription medications or hormones. If a lab value or vital reaches a dangerous level, the OS stops optimising that marker and tells you to get in-person care the same day.';
@@ -280,6 +285,7 @@
   const gap = (v, r, width) => { const d = r[0] != null && v < r[0] ? r[0] - v : r[1] != null && v > r[1] ? v - r[1] : 0; return clamp(d / (width || 1), 0, 1); };
   function markerEval(m) {
     if (!hasValue(m)) return { status: 'muted', tier: 'none', label: 'No result yet', score: null };
+    if (!plausible(m.id, m.value)) return { status: 'warn', tier: 'error', label: 'Check this value', score: null };
     const v = Number(m.value), pk = peakOf(m), o = m.optimal;
     const ow = ((o[1] ?? (o[0] ?? v) * 1.5) - (o[0] ?? 0)) || Math.abs(v) || 1;
     if (DANGER[m.id] && ((DANGER[m.id][0] != null && v < DANGER[m.id][0]) || (DANGER[m.id][1] != null && v > DANGER[m.id][1]))) return { status: 'bad', tier: 'danger', label: 'Red flag', score: 20 };
@@ -328,7 +334,7 @@
     const have = Object.keys(W).filter((k) => parts[k] != null), ww = have.reduce((a, k) => a + W[k], 0);
     const mkScore = ww ? have.reduce((a, k) => a + parts[k] * W[k], 0) / ww : null;
     const r = (x) => (x == null ? null : Math.round(x));
-    return { mk: r(mkScore), parts, readiness: r(readiness), markers: mk, flagged: scored.filter((x) => x.e.status !== 'good'), peak: scored.filter((x) => x.e.tier === 'peak').length, redFlags: redFlags(s), empty: !have.length };
+    return { mk: r(mkScore), parts, readiness: r(readiness), markers: mk, flagged: scored.filter((x) => x.e.status !== 'good'), suspect: mk.filter((x) => x.e.tier === 'error'), peak: scored.filter((x) => x.e.tier === 'peak').length, redFlags: redFlags(s), empty: !have.length };
   }
 
   function targets(p) {
@@ -418,9 +424,9 @@
   /* ── OS kernel: store, bus, router ───────────────────────────────── */
   const listeners = {};
   const OS = {
-    VERSION: '1.1.0', BUILD: 30, errors, logError,
+    VERSION: '1.1.1', BUILD: 31, errors, logError,
     esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
-    seed, blank, hasValue, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
+    seed, blank, hasValue, plausible, PLAUSIBLE, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
     views: {}, order: [], acts: {}, changes: {},
     state: null, current: null, cleanup: null,
     on(ev, fn) { (listeners[ev] = listeners[ev] || []).push(fn); },
