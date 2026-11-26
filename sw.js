@@ -3,7 +3,7 @@
    with the cached copy when offline. Large models (anatomy meshes, MoveNet): cache first, they rarely change.
    Pinned libraries and fonts from CDNs: cache first (their URLs carry versions).
    Supabase, wearables, the Ingest API, Myo AI and anything else: straight to the network, never stored. */
-const VERSION = 'myo-1.2.0-32-202611262138';            // tools/build-site.ps1 appends the build time
+const VERSION = 'myo-1.2.0-32-202611262142';            // tools/build-site.ps1 appends the build time
 const APP = `${VERSION}-app`, MODELS = 'myo-models-v1', LIBS = 'myo-libs-v1';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'privacy.html', 'terms.html', 'oauth-done.html', 'share.html', 'js/share-view.js',

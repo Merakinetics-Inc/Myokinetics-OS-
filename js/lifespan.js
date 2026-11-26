@@ -20,12 +20,16 @@
   const fmt = (d) => `${MON[+d.slice(5, 7) - 1]} ${+d.slice(8, 10)}`;
 
   /* ── the daily log: one row a day, updated in place when values change that day; written quietly ── */
+  function liveRow(s, sc) {
+    if (!OS.longevity) return null;
+    const S = OS.longevity.summary(s, sc || OS.scores(s));
+    if (S.myoAge == null && S.phenoAge == null && S.fitnessAge == null) return null;
+    const pv = Object.values(S.pillars || {}).filter((x) => x != null), pav = pv.length ? Math.round(pv.reduce((a, b) => a + b, 0) / pv.length) : null;
+    return [dayKey(), r1(S.myoAge), r1(S.phenoAge), r1(S.fitnessAge), pav];
+  }
   function snapshot(s, sc) {
-    if (!OS.longevity) return;
-    const S = OS.longevity.summary(s, sc), G = OS.longevity.ensure(s), k = dayKey();
-    if (S.myoAge == null && S.phenoAge == null && S.fitnessAge == null) return;
-    const pv = Object.values(S.pillars).filter((x) => x != null), pav = pv.length ? Math.round(pv.reduce((a, b) => a + b, 0) / pv.length) : null;
-    const row = [k, r1(S.myoAge), r1(S.phenoAge), r1(S.fitnessAge), pav];
+    const row = liveRow(s, sc); if (!row) return;
+    const G = OS.longevity.ensure(s), k = row[0];
     G.log = G.log || [];
     const last = G.log[G.log.length - 1];
     if (last && last[0] === k) { if (JSON.stringify(last) === JSON.stringify(row)) return; G.log[G.log.length - 1] = row; } else G.log.push(row);
@@ -45,7 +49,10 @@
       const days = [...new Set([...((glu && glu.history) || []), ...((crp && crp.history) || [])].map((x) => x[0]))].filter((d) => d >= y0 && d <= today).sort();
       days.forEach((d) => { const g = at(glu, d), c = at(crp, d); if (g == null || c == null) return; const p = OS.longevity.phenoCalc(G.ph, g, c, ageAt(d)); if (p != null) rows.set(d, { d, pheno: r1(p), rec: true }); });
     }
-    (G.log || []).filter((r) => r[0] >= y0 && r[0] <= today).forEach(([d, myo, pheno, fit, pil]) => {
+    // stored days, then today from live values: the page draws before the route snapshot saves
+    const live = liveRow(s), logRows = (G.log || []).filter((r) => r[0] >= y0 && r[0] < today);
+    if (live) logRows.push(live);
+    logRows.forEach(([d, myo, pheno, fit, pil]) => {
       const cur = rows.get(d) || { d };
       rows.set(d, { ...cur, myo, fit, pil, pheno: pheno ?? cur.pheno, rec: pheno == null ? !!cur.rec : false });
     });
@@ -132,7 +139,7 @@
     const D = ytd(s), S = OS.longevity.summary(s, sc), age = s.profile.age;
     const k = lead(D), xs = D.pts.filter((p) => p[k] != null), name = SERIES.find((x) => x[0] === k)[1];
     const change = xs.length > 1 ? xs.at(-1)[k] - xs[0][k] : null, pc = pace(D, k);
-    const logged = ((s.longevity && s.longevity.log) || []).filter((r) => r[4] != null), pil = logged.length ? logged.at(-1)[4] : null, pil0 = logged.length > 1 ? logged[0][4] : null;
+    const logged = D.pts.filter((p) => p.pil != null).map((p) => [p.d, p.pil]), pil = logged.length ? logged.at(-1)[1] : null, pil0 = logged.length > 1 ? logged[0][1] : null;
     const tile = (label, val, sub, cls = '') => `<div class="ls-tile ${cls}"><span>${label}</span><b class="num">${val}</b><em>${sub}</em></div>`;
     const empty = !D.pts.length;
     return `<section class="card ls" aria-labelledby="ls-h">
