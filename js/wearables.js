@@ -282,9 +282,67 @@
     const name = (SRC[e.data.provider] || {}).n || 'Wearable';
     connLink = null;
     if (e.data.type === 'wearable-failed') { msg = `${name} was not connected. ${e.data.detail || ''}`.trim(); if (OS.current === 'wearables') OS.render(); return; }
-    msg = `${name} connected. Syncing now…`; loadConn(true);
+    msg = `${name} connected. Syncing now…`; loadConn(true); setTimeout(() => liveTick(true), 2500);
     if (SRC[e.data.provider] && OS.acts['wv-sync']) setTimeout(() => OS.acts['wv-sync']({ dataset: { src: e.data.provider } }), 400);
   });
+
+
+  /* ── live sync: new nights arrive by themselves while Myo is open (build 35) ──
+     The proxy keeps each member's daily cache current from Oura and WHOOP webhooks plus a 15-minute catch-up job.
+     Here: on start, on returning to the tab, every 3 minutes while visible and right after a connection, ask the
+     proxy for days changed since the last check (/v1/daily?since=) and fold them into readiness and the scores. */
+  const LIVE_EVERY = 3 * 60_000;
+  const LIVE = { at: 0, busy: false, err: '', since: {}, started: false, last: null };
+  const liveReady = () => !!(cfg.proxy && OS.auth && OS.auth.user);
+  function liveText() {
+    if (!cfg.proxy) return '';
+    if (!(OS.auth && OS.auth.user)) return 'Live sync starts when you sign in on Profile.';
+    const act = ['oura', 'whoop'].filter((k) => conn && conn[k] && conn[k].status === 'active');
+    if (!act.length) return conn ? 'Live sync: connect Oura or WHOOP below to start.' : 'Live sync: checking your connections…';
+    const ago = LIVE.at ? Math.max(0, Math.round((Date.now() - LIVE.at) / 60000)) : null;
+    const push = act.filter((k) => conn[k].push).map((k) => SRC[k].n);
+    return `Live sync on for ${act.map((k) => SRC[k].n).join(' and ')}${ago == null ? '' : ` · checked ${ago ? `${ago} min ago` : 'just now'}`}${LIVE.busy ? ' · checking…' : ''}. ${push.length ? `${push.join(' and ')} ${push.length > 1 ? 'send' : 'sends'} new data the moment your device syncs.` : 'New data is picked up every 15 minutes.'}${LIVE.err ? ` Last check failed: ${LIVE.err}` : ''}`;
+  }
+  const paintLive = () => { const el = document.getElementById('wv-livestat'); if (el) el.textContent = liveText(); };
+  async function liveTick(force) {
+    if (LIVE.busy || !liveReady() || (typeof document !== 'undefined' && document.hidden && !force)) return;
+    if (!force && Date.now() - LIVE.at < 50_000) return;
+    LIVE.busy = true; paintLive();
+    try {
+      const j = await proxyJSON('GET', '/v1/connections'); conn = {}; (Array.isArray(j) ? j : j.connections || []).forEach((c) => { conn[c.provider] = c; }); connAt = Date.now();
+      for (const k of ['oura', 'whoop']) {
+        if (!(conn[k] && conn[k].status === 'active')) continue;
+        const asked = new Date(Date.now() - 5000).toISOString(), first = !LIVE.since[k];
+        const q = new URLSearchParams({ from: dayKey(addDays(new Date(), first ? -30 : -7)), to: dayKey(new Date()), provider: k });
+        if (!first) q.set('since', LIVE.since[k]);
+        const rows = await proxyJSON('GET', `/v1/daily?${q}`);
+        LIVE.since[k] = asked;
+        const recs = (Array.isArray(rows) ? rows : []).map(({ provider, ...r }) => r).filter((r) => r.d && Object.keys(r).length > 1);
+        if (recs.length) liveCommit(k, recs);
+      }
+      LIVE.at = Date.now(); LIVE.err = '';
+    } catch (e) { LIVE.err = e.message; LIVE.at = Date.now(); }
+    LIVE.busy = false; paintLive();
+  }
+  // fold changed days in without losing imported history; sample data is replaced; a new night gets one toast
+  function liveCommit(k, recs) {
+    const s = OS.state; if (!s) return;
+    const W = ensure(s), before = W[k].days.slice(-1)[0] || null;
+    const base = W[k].via === 'sample' ? [] : W[k].days, m = mergeDays(base, recs);
+    const after = m.days.slice(-1)[0] || null;
+    if (JSON.stringify(m.days.slice(-8)) === JSON.stringify(W[k].days.slice(-8)) && W[k].via === 'api') return;
+    OS.update((st) => { const X = ensure(st); X[k] = { via: 'api', at: new Date().toISOString(), days: m.days }; X.insight = null; applyVitals(st); }, { render: OS.current === 'wearables' && !busy });
+    const fresh = after && (!before || after.d > before.d || (after.score != null && before.score == null && after.d === before.d));
+    if (fresh) { LIVE.last = { k, d: after.d, at: Date.now() }; OS.toast(`${SRC[k].n}: ${after.score != null ? `${SRC[k].score.toLowerCase()} ${Math.round(after.score)}` : 'new sleep'} for ${after.d.slice(5)}`); }
+  }
+  function liveStart() {
+    if (LIVE.started) return; LIVE.started = true;
+    setTimeout(() => liveTick(true), 4000);
+    setInterval(() => liveTick(false), LIVE_EVERY);
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!document.hidden) liveTick(false); });
+    setInterval(paintLive, 30_000);
+  }
+  OS.act('wv-live-now', () => liveTick(true));
 
   OS.register('wearables', {
     title: 'Wearables', icon: 'wearable',
@@ -310,6 +368,7 @@
       return `${OS.ui.head('Oura · WHOOP · sleep, recovery, strain', 'Wearables', 'Connect your ring or strap. Sleep, HRV and recovery flow into readiness, your protocol, Myo and every score in the app.',
         `<div class="hstat"><span>Sources</span><b class="num">${['oura', 'whoop'].filter((k) => W[k].days.length).length}/2</b></div><div class="hstat"><span>Days of data</span><b class="num">${total}</b></div><div class="hstat"><span>Myo readiness</span><b class="num">${OS.dash(sc.readiness)}</b></div>`)}
       ${msg ? `<div class="banner ${/n't|rejected|error|limit|needs|Add the|expired|Too many/i.test(msg) ? 'warn' : ''}" role="status">${esc(msg)}${connLink ? ` <a class="link small" href="${esc(connLink.url)}" target="_blank" rel="noopener">Open ${esc(SRC[connLink.k].n)} sign-in</a>` : ''}</div>` : ''}
+      ${cfg.proxy ? `<div class="wv-livebar"><span class="wv-dot ${liveReady() && conn && ['oura', 'whoop'].some((k) => conn[k] && conn[k].status === 'active') ? 'on' : ''}" aria-hidden="true"></span><p class="small" id="wv-livestat" role="status">${esc(liveText())}</p>${liveReady() ? `<button class="btn ghost sm" data-act="wv-live-now" ${LIVE.busy ? 'disabled' : ''}>${icon('rotate', 14)} Check now</button>` : ''}</div>` : ''}
       <div class="grid g-2">${srcCard('oura')}${srcCard('whoop')}</div>
       <section class="card"><div class="card-h"><h2>What drives readiness</h2><span class="muted small">${esc(s.vitals.src || 'Sample vitals (no wearable connected)')}</span></div>
         <div class="row wv-pri"><div class="seg">${[['auto', 'Most recent'], ['oura', 'Oura'], ['whoop', 'WHOOP']].map(([k, l]) => `<button class="${W.primary === k ? 'on' : ''}" data-act="wv-primary" data-v="${k}" aria-pressed="${W.primary === k}" ${k !== 'auto' && !W[k].days.length ? 'disabled' : ''}>${l}</button>`).join('')}</div>
@@ -408,5 +467,7 @@ Data (JSON): ${JSON.stringify(data)}`;
     busy = ''; OS.update((st) => { ensure(st).insight = { text, at: new Date().toISOString() }; });
   });
 
-  OS.wear = { parseCSV, mapRecord, mergeDays, readFiles, applyVitals, primaryOf };
+  OS.wear = { parseCSV, mapRecord, mergeDays, readFiles, applyVitals, primaryOf, live: { tick: liveTick, state: LIVE, commit: liveCommit, text: liveText } };
+  // live sync runs app-wide, not only on this page
+  liveStart();
 })();

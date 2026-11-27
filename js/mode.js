@@ -47,7 +47,7 @@
         <div><h3>After: pain log</h3>${pain.length ? `<ul class="mm-pain">${pain.map((x) => `<li><span class="num">${OS.fmtDate(x.d)}</span><b class="num">${x.v}/10</b><span class="muted small">${esc(x.note || '')}</span></li>`).join('')}</ul>` : '<p class="muted small">Log pain once a day after the procedure.</p>'}
           <form data-submit="mm-pain" class="row"><label class="sr" for="mp-p">Pain 0 to 10</label><input id="mp-p" name="v" type="number" min="0" max="10" required placeholder="0–10" style="width:80px"><label class="sr" for="mp-note">Note</label><input id="mp-note" name="note" maxlength="80" placeholder="Note (optional)"><button class="btn sm">Log</button></form>
           <p class="fine">Call your surgical team or emergency services for fever, spreading redness, calf pain or swelling, chest pain, shortness of breath, or pain that suddenly gets worse.</p>
-          <div class="row"><a class="btn ghost sm" href="#pt">Rehab plans</a><a class="btn ghost sm" href="#imaging">Your scans</a></div></div></div></section>`;
+          <div class="row"><a class="btn ghost sm" href="#surgery">Full surgery companion</a><a class="btn ghost sm" href="#pt">Rehab plans</a><a class="btn ghost sm" href="#imaging">Your scans</a></div></div></div></section>`;
   }
 
   OS.register('mode', {

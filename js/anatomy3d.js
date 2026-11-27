@@ -437,5 +437,6 @@
     }
   });
 
-  OS.Anatomy = { mountAll, viewer, PRESETS, SYSTEMS: SYS, ORGANS: ORG };
+  // load and three are shared with the Digital twin (js/twin.js), which reshapes the skin to the member
+  OS.Anatomy = { mountAll, viewer, PRESETS, SYSTEMS: SYS, ORGANS: ORG, load: loadSystem, three };
 })();
