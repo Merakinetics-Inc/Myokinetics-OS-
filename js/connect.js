@@ -38,10 +38,13 @@
     ['hume', 'body', 'Hume Pod', 'Pod, Pod 2.0', "Through the Hume app's Apple Health sync (export.zip), CSV or quick entry", 'Body composition', 'file', 'go:bodycomp'],
     ['dexa', 'body', 'DEXA body-composition reports', 'Hospital and clinic DXA, body-composition studios', 'PDF report read on this device, pasted text, or by hand', 'Body composition', 'file', 'go:bodycomp'],
     ['withings', 'body', 'Withings', 'Body scales, BPM, Sleep Analyzer', 'Withings API (OAuth app keys)', 'Weight, blood pressure, sleep', 'partner', 'tab:api'],
+    ['ultrasound', 'body', 'Ultrasound scanners', 'Cart and portable scanners with HDMI, VGA or S-video out; handheld probe apps', 'USB video capture, screen share, or an exported clip or image, on this device', 'Live ultrasound, Pregnancy, Blood flow', 'live', 'go:ultrasound'],
+    ['doppler', 'cardio', 'Pocket vascular Dopplers', 'Any pocket Doppler with a headphone output or speaker', 'Line-in or microphone audio, or a recording', 'Blood flow: velocity, RI, PI, artery or vein pattern', 'live', 'go:flow'],
     ['dicom', 'body', 'Imaging (CT, MRI, DEXA)', 'Any DICOM export', 'DICOM folder import on this device', 'Imaging', 'live', 'go:imaging'],
     ['xray', 'body', 'X-ray Mirror overlays', 'Camera, video or demo', 'Live face and hand tracking', 'Vielight module and EEG electrode positions on your head', 'live', 'go:mirror'],
     ['machines', 'body', 'Merakinetics machines', 'APS Machine 2.0, ISO Flow, AR-Vision', 'BLE and MQTT (sample feed until hardware ships)', 'Machines, Training', 'live', 'go:machines'],
     ['ftms', 'body', 'Cardio machines', 'Bluetooth FTMS bikes, rowers, treadmills', 'Bluetooth FTMS profile', 'Machines', 'planned', 'go:machines'],
+    ['stemwave', 'recovery', 'StemWave and shockwave sessions', 'StemWave, radial and focused shockwave at a provider (not affiliated)', 'Session log: area, pulses, setting, pain and function', 'Wave therapy', 'log', 'go:wave'],
     ['sauna', 'recovery', 'Saunas, plunges, cryochambers, HBOT', 'Any brand', 'Session log, or the Ingest API', 'Recovery', 'log', 'go:recovery'],
     ['labs', 'clinical', 'Lab results', 'Quest, Labcorp, any lab PDF', 'PDF or CSV on Biology; FHIR, HL7 or CSV in the Console', 'Biology markers', 'live', 'tab:console'],
     ['ehr', 'clinical', 'Health records (SMART on FHIR)', 'Epic, Oracle Health, athenahealth', 'SMART on FHIR app launch (registration per EHR)', 'Biology, Imaging', 'partner', 'tab:api']

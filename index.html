@@ -2381,6 +2381,46 @@ g.ht-p.sel line { stroke: var(--accent); }
 .at-curves { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; } .at-curve { margin: 0; }
 .at-curve figcaption { display: flex; flex-direction: column; gap: 2px; font-size: 13px; margin-bottom: 4px; } .at-curve svg { width: 100%; display: block; }
 .at-you { stroke: var(--fg); stroke-width: 1; stroke-dasharray: 3 3; }
+/* ── build 36: live ultrasound, blood flow, pregnancy, wave therapy ── */
+.us-page, .fl { display: flex; flex-direction: column; gap: 14px; }
+.us-stage { background: #000; border-radius: var(--r-sm); overflow: hidden; }
+.us-cv { width: 100%; height: auto; display: block; cursor: crosshair; touch-action: manipulation; }
+.us-ctl { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; min-width: 0; }
+.us-srcs, .us-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.us-srcs select { max-width: 100%; }
+.us-tools .btn.on { box-shadow: inset 0 0 0 2px var(--accent); }
+.us-cal { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; } .us-cal input { width: 80px; }
+.us-meas { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; } .us-meas li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.us-snaps { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap: 8px; }
+.us-snaps figure { margin: 0; } .us-snaps img { width: 100%; display: block; border-radius: 6px; background: #000; } .us-snaps figcaption { display: flex; gap: 10px; margin-top: 4px; }
+.us-err { color: var(--bad); }
+.fl { --fl-c: #2a78d6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fl { --fl-c: #3987e5; } }
+:root[data-theme="dark"] .fl { --fl-c: #3987e5; }
+.fl-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.fl-bars li { display: grid; grid-template-columns: minmax(84px, 9rem) minmax(0, 1fr) 3.4rem; gap: 10px; align-items: center; font-size: 13px; }
+.fl-track { display: block; height: 10px; border-radius: 4px; background: color-mix(in srgb, var(--fg) 7%, transparent); overflow: hidden; }
+.fl-track > i { display: block; height: 100%; background: var(--fl-c); border-radius: 0 4px 4px 0; }
+.fl-bars b { text-align: right; font: 600 12.5px var(--f-mono); color: var(--fg); }
+.fl-set { margin-top: 10px; } .lb-grid label.fl-listen { flex-direction: row; align-items: center; align-self: end; gap: 8px; }
+.fl-spec { width: 100%; height: 260px; display: block; margin-top: 10px; border-radius: var(--r-sm); background: #05070b; }
+.fl-pat { margin: 8px 0 0; }
+.pg-track { position: relative; height: 12px; margin: 4px 0; border-radius: 6px; background: color-mix(in srgb, var(--fg) 8%, transparent); overflow: hidden; }
+.pg-track > i { display: block; height: 100%; border-radius: 6px; background: var(--bc-c1); }
+.pg-track > b { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--card); }
+.pg-tri { display: grid; grid-template-columns: 35fr 35fr 30fr; margin-bottom: 12px; }
+.pg-band { fill: color-mix(in srgb, var(--bc-c1) 14%, transparent); stroke: none; }
+.pg-mid { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.bc-ln.pg-you { stroke: var(--bc-c1); } .bc-mk.pg-you { fill: var(--bc-c1); }
+.bc-sw.pg-sw-you { background: var(--bc-c1); border-radius: 50%; }
+.bc-sw.pg-sw-mid { width: 14px; height: 0; border-radius: 0; border-top: 2px dashed var(--muted); vertical-align: 3px; }
+.bc-sw.pg-sw-band { background: color-mix(in srgb, var(--bc-c1) 20%, transparent); }
+.pg-form label .muted { font-size: 11.5px; }
+.wv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; margin-top: 10px; }
+.wv-mini { margin: 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-sm); min-width: 0; }
+.wv-mini figcaption { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin-bottom: 6px; }
+.wv-mini svg { width: 100%; height: auto; display: block; }
+.wv-after { font-size: 12px; padding: 2px 4px; }
 </style>
 <script>/* apply the saved look before first paint (js/look.js owns the picker) */(function(){var r=document.documentElement,l={};window.__myoHost=r.getAttribute('data-theme');try{l=JSON.parse(localStorage.getItem('myo-look')||'{}')||{}}catch(e){}r.setAttribute('data-scheme',typeof l.scheme==='string'?l.scheme:'clinical');r.setAttribute('data-fx',l.fx==='calm'?'calm':'full');if(l.mode==='light'||l.mode==='dark')r.setAttribute('data-theme',l.mode);})();</script>
 <div class="ambient" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
@@ -2452,6 +2492,10 @@ g.ht-p.sel line { stroke: var(--accent); }
 <script src="js/twin.js"></script>
 <script src="js/surgery.js"></script>
 <script src="js/atlas.js"></script>
+<script src="js/ultrasound.js"></script>
+<script src="js/flow.js"></script>
+<script src="js/pregnancy.js"></script>
+<script src="js/wave.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/look.js"></script>

@@ -65,6 +65,8 @@
     });
     const m = timed(S, 'mea', () => measureRR(S));
     timed(S, 'qa', () => { S.q = Math.round(100 * (m ? m.ok : 0) * (S.contact ? 1 : 0.15)); });
+    // perfusion index: the pulsing part of the light as a share of the steady part, over the last 2.5 s
+    if (!S.piT || t - S.piT > 0.5) { S.piT = t; let lo = Infinity, hi = -Infinity; for (let i = S.proc.length - 1; i >= 0 && S.proc[i][0] >= t - 2.5; i--) { lo = Math.min(lo, S.proc[i][1]); hi = Math.max(hi, S.proc[i][1]); } const dc = Math.abs(meanSince(S.raw, t - 2.5)); S.pi = dc > 1 && hi > lo && S.q >= 40 ? Math.round(((hi - lo) / dc) * 1000) / 10 : null; }
     const tc = t - 12; trim(S.raw, tc); trim(S.det, tc); trim(S.proc, tc); while (S.beats.length && S.beats[0] < tc) S.beats.shift();
   }
   // periodicity by autocorrelation over the recent window, resampled to a fixed rate
@@ -229,7 +231,7 @@
     const set = (id, v) => { const el = document.getElementById(id); if (el && el.textContent !== String(v)) el.textContent = v; };
     const el = (S.t1 || now()) - S.t0;
     set('st-hr', S.hr == null ? '—' : S.hr); set('st-hrv', S.hrv == null ? '—' : S.hrv); set('st-br', S.br == null ? '—' : S.br);
-    set('st-q', S.q == null ? '—' : S.q); set('st-time', `${Math.floor(el / 60)}:${String(Math.floor(el % 60)).padStart(2, '0')}`);
+    set('st-q', S.q == null ? '—' : S.q); set('st-pi', S.pi == null ? '—' : S.pi.toFixed(1)); set('st-time', `${Math.floor(el / 60)}:${String(Math.floor(el % 60)).padStart(2, '0')}`);
     set('st-note', S.kind === 'ppg' && !S.contact && S.src === 'camera' ? 'No fingertip on the lens yet' : S.note || '');
     const qb = document.getElementById('st-qbar'); if (qb) qb.style.width = clamp(S.q || 0, 0, 100) + '%';
     OPS[S.kind].forEach(([k]) => {
@@ -267,7 +269,7 @@
     cancelAnimationFrame(S.raf); S.stop.forEach((f) => { try { f(); } catch { /* */ } });
     ST.run = null;
     const dur = Math.round((S.t1 || now()) - S.t0);
-    ST.last = { at: new Date().toISOString(), src: S.src, dur, hr: S.hr, hrv: S.hrv, br: S.br, q: S.q, demo: S.src === 'demo' };
+    ST.last = { at: new Date().toISOString(), src: S.src, dur, hr: S.hr, hrv: S.hrv, br: S.br, q: S.q, demo: S.src === 'demo', ...(S.kind === 'ppg' && S.pi != null ? { pi: S.pi } : {}) };
     if (save && ST.last.src !== 'demo' && dur >= 20 && (ST.last.hr || ST.last.br)) {
       const r = ST.last;
       OS.update((st) => { st.sensors = st.sensors || { log: [] }; st.sensors.log.push(r); st.sensors.log = st.sensors.log.slice(-300); });
@@ -324,6 +326,7 @@
           <div><span>Heart rate</span><b class="num" id="st-hr">${L && L.hr ? L.hr : '—'}</b><em>bpm</em></div>
           <div><span>HRV (RMSSD)</span><b class="num" id="st-hrv">${L && L.hrv ? L.hrv : '—'}</b><em>ms</em></div>
           <div><span>Breathing</span><b class="num" id="st-br">${L && L.br ? L.br : '—'}</b><em>per min</em></div>
+          ${kind === 'ppg' ? `<div><span>Perfusion index</span><b class="num" id="st-pi">${L && L.pi != null ? L.pi.toFixed(1) : '—'}</b><em>% · <a href="#flow">what it means</a></em></div>` : ''}
           <div><span>Signal quality</span><b class="num" id="st-q">${L ? L.q : '—'}</b><em>/ 100</em><i class="st-qbar"><i id="st-qbar" style="width:${L ? L.q : 0}%"></i></i></div>
           <div><span>Time</span><b class="num" id="st-time">${L ? `${Math.floor(L.dur / 60)}:${String(L.dur % 60).padStart(2, '0')}` : '0:00'}</b><em>min:s</em></div></div>
         ${!S && L ? `<div class="st-after">${L.demo ? '<p class="small muted">Demo sessions are not saved.</p>' : L.dur < 20 ? '<p class="small muted">Sessions under 20 seconds are not saved.</p>' : ''}

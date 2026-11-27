@@ -9,12 +9,12 @@
   const { esc, icon, dayKey, targets, protocol } = OS;
 
   const CLUSTERS = [
-    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['twin', 'body', 'atlas', 'heart', 'bodycomp', 'biology', 'biochem', 'longevity', 'imaging', 'mirror'] },
-    { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'pt', 'surgery', 'function', 'mind', 'logbook'] },
+    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['twin', 'body', 'atlas', 'heart', 'flow', 'bodycomp', 'biology', 'biochem', 'longevity', 'imaging', 'ultrasound', 'mirror'] },
+    { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'wave', 'pt', 'surgery', 'function', 'mind', 'logbook'] },
     { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'bci', 'connect', 'evidence', 'profile', 'system'] },
     { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'mode', 'score', 'coach', 'report'] },
     { k: 'train', side: 'r', code: 'TRN·05', label: 'Training', items: ['training', 'motion', 'athlete', 'ar', 'machines', 'gym'] },
-    { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'kitchen', 'life', 'enhance', 'looks', 'augment'] }
+    { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'kitchen', 'life', 'pregnancy', 'enhance', 'looks', 'augment'] }
   ];
   // the five Myo Score systems; colours match the flyer and stay the same in every scheme
   const PARTS = [['biology', 'Biology', '#38bdf8'], ['recovery', 'Recovery', '#a78bfa'], ['training', 'Training', '#fb8a4a'], ['nutrition', 'Fuel', '#a3d65c'], ['life', 'Life', '#6b97ff']];
@@ -52,6 +52,10 @@
       case 'twin': { if (!OS.twin) return ['A 3D model of you', 'muted']; const C = OS.twin.completeness(s, OS.twin.baseline(s)); return [`Twin ${C.pct}% built${C.live ? ' · live' : ''}`, C.pct >= 60 ? 'good' : 'warn']; }
       case 'surgery': { const P = s.procedure || {}; if (!P.date) return ['Prepare, day-of updates, recovery', 'muted']; const d = Math.round((Date.parse(P.date + 'T12:00:00') - Date.parse(dayKey() + 'T12:00:00')) / 864e5); return [d > 0 ? `${P.name || 'Surgery'} in ${d} day${d === 1 ? '' : 's'}` : d === 0 ? 'Surgery today' : `Day ${-d} of recovery`, d > 0 ? 'warn' : 'good']; }
       case 'atlas': return ['Every system, embryo to old age', 'muted'];
+      case 'flow': { const L = ((s.flow && s.flow.log) || []).slice(-1)[0]; return L && L.psv != null ? [`Last Doppler: peak ${L.psv} cm/s`, 'good'] : ['Doppler, perfusion, circulation', 'muted']; }
+      case 'ultrasound': return ['Any scanner with a video output', 'muted'];
+      case 'pregnancy': { const w = OS.pregnancy && OS.pregnancy.status(s); return w ? [`${w} pregnant`, 'good'] : ['Dates, scans and growth', 'muted']; }
+      case 'wave': { const n = OS.wave && OS.wave.status(s); return n ? [n, 'good'] : ['StemWave and shockwave log', 'muted']; }
       case 'bodycomp': { if (OS.bodycomp && OS.bodycomp.ensure) OS.bodycomp.ensure(s); const xs =((s.bodycomp && s.bodycomp.scans) || []).slice().sort((a, b) => a.d.localeCompare(b.d)), L = xs[xs.length - 1]; return L ? [`${L.bf != null ? `Body fat ${L.bf}%` : `${L.w} kg`} · ${L.kind === 'dexa' ? 'DEXA' : 'scale'} ${OS.fmtDate(L.d)}`, 'good'] : ['Smart scale and DEXA', 'muted']; }
       case 'bci': { const n = ((s.neuro && s.neuro.log) || []).length; return n ? [`${n} EEG session${n > 1 ? 's' : ''} saved`, 'good'] : ['EEG, decoders, implant design', 'muted']; }
       case 'logbook': { const wk = dayKey(OS.addDays(new Date(), -6)), n = (s.symptoms || []).filter((r) => r.at.slice(0, 10) >= wk).length; return n ? [`${n} symptom${n > 1 ? 's' : ''} this week`, 'warn'] : ['Every input on one timeline', 'muted']; }
