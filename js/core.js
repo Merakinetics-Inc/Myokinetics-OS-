@@ -93,7 +93,10 @@
     evidence: '<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4"/><circle cx="11" cy="13" r="3"/><path d="M13.2 15.2 16 18"/>',
     score: '<path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 16l4-5"/><circle cx="12" cy="16" r="1.3"/>',
     mode: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3"/><path d="M4 12h3M17 12h3"/>',
-    mind: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>'
+    mind: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>',
+    heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/><path d="M3 12.5h4.5l1.8-2.6 2.6 5 1.9-3.2h7.2"/>',
+    stream: '<circle cx="4.5" cy="12" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="19.5" cy="12" r="2"/><path d="M6.2 10.8 10.3 7.2M6.2 13.2l4.1 3.6M13.7 7.2l4.1 3.6M13.7 16.8l4.1-3.6"/>',
+    logbook: '<path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M8 3v18M11 8h4.5M11 12h4.5M11 16h3"/>'
   };
   const icon = (n, s = 20) => `<svg class="ico" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -424,7 +427,7 @@
   /* ── OS kernel: store, bus, router ───────────────────────────────── */
   const listeners = {};
   const OS = {
-    VERSION: '1.2.0', BUILD: 32, errors, logError,
+    VERSION: '1.3.0', BUILD: 33, errors, logError,
     esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
     seed, blank, hasValue, plausible, PLAUSIBLE, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
     views: {}, order: [], acts: {}, changes: {},
@@ -434,6 +437,8 @@
     register(name, view) { this.views[name] = view; if (!view.hidden) this.order.push(name); },
     act(name, fn) { this.acts[name] = fn; },
     change(name, fn) { this.changes[name] = fn; },
+    // one line on the Log book timeline: imports, scans, changes that move your numbers
+    logEvent(cat, title, text, extra = {}) { if (!this.state) return; this.update((s) => { s.events = (s.events || []).concat([{ at: new Date().toISOString(), cat, title, text, ...extra }]).slice(-1500); }, { keepSample: true, render: false }); },
     update(fn, opts = {}) {
       fn(this.state);
       if (this.state.sample && !opts.keepSample) this.state.sampleEdited = true;

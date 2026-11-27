@@ -9,9 +9,9 @@
   const { esc, icon, dayKey, targets, protocol } = OS;
 
   const CLUSTERS = [
-    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['body', 'biology', 'biochem', 'longevity', 'imaging', 'mirror'] },
-    { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'pt', 'function', 'mind'] },
-    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'connect', 'evidence', 'profile', 'system'] },
+    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['body', 'heart', 'biology', 'biochem', 'longevity', 'imaging', 'mirror'] },
+    { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'pt', 'function', 'mind', 'logbook'] },
+    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'connect', 'evidence', 'profile', 'system'] },
     { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'mode', 'score', 'coach', 'report'] },
     { k: 'train', side: 'r', code: 'TRN·05', label: 'Training', items: ['training', 'motion', 'athlete', 'ar', 'machines', 'gym'] },
     { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'kitchen', 'life', 'enhance', 'looks', 'augment'] }
@@ -47,6 +47,9 @@
       case 'longevity': { try { const L = OS.longevity.summary(s, sc); return L.myoAge == null || !Number.isFinite(L.myoAge) ? ['Add labs for your Myo age', 'muted'] : [`Myo age ${L.myoAge.toFixed(1)}`, L.myoAge <= s.profile.age ? 'good' : 'warn']; } catch { return [desc(n), 'muted']; } }
       case 'sleep': return vt.sleepH != null ? [`Last night ${vt.sleepH} h`, vt.sleepH >= 7 ? 'good' : 'warn'] : ['Start a 14-night study', 'muted'];
       case 'recovery': return sc.readiness != null ? [`Readiness ${sc.readiness} · ${sc.readiness >= 60 ? 'train' : 'recover'}`, sc.readiness >= 60 ? 'good' : 'warn'] : ['Heat, cold, light and sound', 'muted'];
+      case 'heart': return vt.rhr ? [`Resting ${vt.rhr} bpm${vt.hrv ? ` · HRV ${vt.hrv} ms` : ''}`, vt.rhrBase && vt.rhr > vt.rhrBase ? 'warn' : 'good'] : ['Anatomy, rhythm, coronaries', 'muted'];
+      case 'stream': { const L = s.sensors && s.sensors.log && s.sensors.log[s.sensors.log.length - 1]; return L ? [`Last: ${L.hr ? L.hr + ' bpm' : L.br + ' breaths/min'} · quality ${L.q}`, L.q >= 60 ? 'good' : 'warn'] : ['Pulse, heart sounds, breathing', 'muted']; }
+      case 'logbook': { const wk = dayKey(OS.addDays(new Date(), -6)), n = (s.symptoms || []).filter((r) => r.at.slice(0, 10) >= wk).length; return n ? [`${n} symptom${n > 1 ? 's' : ''} this week`, 'warn'] : ['Every input on one timeline', 'muted']; }
       case 'wearables': { const on = ['oura', 'whoop'].filter((x) => s.wearables && s.wearables[x]); return on.length ? [`${on.map((x) => (x === 'oura' ? 'Oura' : 'WHOOP')).join(' and ')} connected`, 'good'] : ['Connect Oura or WHOOP', 'warn']; }
       case 'profile': return OS.auth && OS.auth.user ? ['Signed in · synced', 'good'] : ['Sign in to sync your devices', 'muted'];
       case 'system': return [`Myo ${OS.VERSION} · build ${OS.BUILD}`, 'muted'];
