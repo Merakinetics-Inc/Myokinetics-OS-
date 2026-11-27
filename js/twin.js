@@ -41,7 +41,8 @@
   /* ── the member, as numbers ── */
   function baseline(s) {
     const p = s.profile || {}, sex = p.sex === 'F' ? 'F' : 'M', h = +p.heightCm || 175, age = +p.age || 35;
-    const bc = OS.bodycomp ? (s.bodycomp && s.bodycomp.scans ? s.bodycomp.scans.slice().sort((a, b) => a.d.localeCompare(b.d)) : []) : [];
+    if (OS.bodycomp && OS.bodycomp.ensure) OS.bodycomp.ensure(s);
+    const bc = OS.bodycomp ? (s.bodycomp && s.bodycomp.scans ?s.bodycomp.scans.slice().sort((a, b) => a.d.localeCompare(b.d)) : []) : [];
     const last = bc[bc.length - 1] || null, D = last && OS.bodycomp ? OS.bodycomp.derive(last, h) : null;
     const segScan = [...bc].reverse().find((x) => x.seg && ['la', 'ra', 'll', 'rl'].every((k) => x.seg[k] && x.seg[k].lean != null)) || null;
     const w = (D && D.w) || +p.weightKg || 75;

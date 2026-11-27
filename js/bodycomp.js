@@ -887,6 +887,7 @@
     BC.draft = null; BC.note = ''; OS.toast('DEXA scan saved'); OS.render();
   });
 
-  OS.bodycomp = { derive, parseDexa, pdfText, parseWM, parseBCM, zipEntry, scanHealthXml, groupHealth, parseCSV, csvRows, pairs, sampleScans, state: BC };
+  // ensure is shared so the twin and the hub see the sample member's scans before this page is opened
+  OS.bodycomp = { ensure, derive, parseDexa, pdfText, parseWM, parseBCM, zipEntry, scanHealthXml, groupHealth, parseCSV, csvRows, pairs, sampleScans, state: BC };
   OS.pdfText = pdfText;
 })();
