@@ -34,6 +34,8 @@
     ['Heart', 'live', 'Original schematic anatomy, one heartbeat at your heart rate (Wiggers), ECG rhythm with breathing, coronary C-arm views with foreshortening', 'heart'],
     ['Live sensors', 'live', 'Camera pulse, heart sounds, breathing and Bluetooth RR as an observable operator pipeline; raw signals never stored', 'stream'],
     ['Log book', 'live', 'Every input on one timeline with its source; symptom log with emergency guidance; CSV export', 'logbook'],
+    ['Body composition', 'live', 'Bluetooth Weight Scale and Body Composition services; Apple Health export for app-only scales such as the Hume Pod; CSV; DEXA PDF reports read on-device; scale-to-DEXA offset', 'bodycomp'],
+    ['BCI lab', 'live', 'OpenBCI Cyton (Web Serial), Muse (Bluetooth, beta) and EDF/BDF through a timed EEG pipeline; alpha-switch decoder with ITR; implant link and power calculator; OS.neural API', 'bci'],
     ['Scan formats', 'live', 'DICOM uncompressed, JPEG baseline, JPEG lossless, RLE and deflated; NIfTI; ultrasound and angiogram cine; JPEG 2000 planned', 'imaging'],
     ['Mind', 'live', 'PHQ-9, GAD-7 and WHO-5 self-checks, CBT tools, crisis support; answers stay on the device', 'mind'],
     ['Labs, score, protocol', 'live', 'PDF, CSV and pasted lab import; 24 markers scored against optimal and peak; daily protocol', 'biology'],

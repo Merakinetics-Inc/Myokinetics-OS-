@@ -96,7 +96,9 @@
     mind: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>',
     heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/><path d="M3 12.5h4.5l1.8-2.6 2.6 5 1.9-3.2h7.2"/>',
     stream: '<circle cx="4.5" cy="12" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="19.5" cy="12" r="2"/><path d="M6.2 10.8 10.3 7.2M6.2 13.2l4.1 3.6M13.7 7.2l4.1 3.6M13.7 16.8l4.1-3.6"/>',
-    logbook: '<path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M8 3v18M11 8h4.5M11 12h4.5M11 16h3"/>'
+    logbook: '<path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M8 3v18M11 8h4.5M11 12h4.5M11 16h3"/>',
+    scale: '<rect x="3.5" y="4" width="17" height="16" rx="4"/><path d="M8 10.5a5 5 0 0 1 8 0"/><path d="M12 10.6l1.8-2.1"/>',
+    bci: '<path d="M12 5.5a3 3 0 0 0-5.6-1.1A3 3 0 0 0 4 9a3 3 0 0 0 .4 5.3A3 3 0 0 0 8.6 19 2.6 2.6 0 0 0 12 18.4z"/><path d="M12 5.5a3 3 0 0 1 5.6-1.1A3 3 0 0 1 20 9"/><path d="M14 13h2l1.2-2.6 1.6 5 1.2-2.4H22"/>'
   };
   const icon = (n, s = 20) => `<svg class="ico" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -427,7 +429,7 @@
   /* ── OS kernel: store, bus, router ───────────────────────────────── */
   const listeners = {};
   const OS = {
-    VERSION: '1.3.0', BUILD: 33, errors, logError,
+    VERSION: '1.4.0', BUILD: 34, errors, logError,
     esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
     seed, blank, hasValue, plausible, PLAUSIBLE, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
     views: {}, order: [], acts: {}, changes: {},

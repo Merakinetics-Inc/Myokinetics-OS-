@@ -9,9 +9,9 @@
   const { esc, icon, dayKey, targets, protocol } = OS;
 
   const CLUSTERS = [
-    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['body', 'heart', 'biology', 'biochem', 'longevity', 'imaging', 'mirror'] },
+    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['body', 'heart', 'bodycomp', 'biology', 'biochem', 'longevity', 'imaging', 'mirror'] },
     { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'pt', 'function', 'mind', 'logbook'] },
-    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'connect', 'evidence', 'profile', 'system'] },
+    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'bci', 'connect', 'evidence', 'profile', 'system'] },
     { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'mode', 'score', 'coach', 'report'] },
     { k: 'train', side: 'r', code: 'TRN·05', label: 'Training', items: ['training', 'motion', 'athlete', 'ar', 'machines', 'gym'] },
     { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'kitchen', 'life', 'enhance', 'looks', 'augment'] }
@@ -49,6 +49,8 @@
       case 'recovery': return sc.readiness != null ? [`Readiness ${sc.readiness} · ${sc.readiness >= 60 ? 'train' : 'recover'}`, sc.readiness >= 60 ? 'good' : 'warn'] : ['Heat, cold, light and sound', 'muted'];
       case 'heart': return vt.rhr ? [`Resting ${vt.rhr} bpm${vt.hrv ? ` · HRV ${vt.hrv} ms` : ''}`, vt.rhrBase && vt.rhr > vt.rhrBase ? 'warn' : 'good'] : ['Anatomy, rhythm, coronaries', 'muted'];
       case 'stream': { const L = s.sensors && s.sensors.log && s.sensors.log[s.sensors.log.length - 1]; return L ? [`Last: ${L.hr ? L.hr + ' bpm' : L.br + ' breaths/min'} · quality ${L.q}`, L.q >= 60 ? 'good' : 'warn'] : ['Pulse, heart sounds, breathing', 'muted']; }
+      case 'bodycomp': { const xs = ((s.bodycomp && s.bodycomp.scans) || []).slice().sort((a, b) => a.d.localeCompare(b.d)), L = xs[xs.length - 1]; return L ? [`${L.bf != null ? `Body fat ${L.bf}%` : `${L.w} kg`} · ${L.kind === 'dexa' ? 'DEXA' : 'scale'} ${OS.fmtDate(L.d)}`, 'good'] : ['Smart scale and DEXA', 'muted']; }
+      case 'bci': { const n = ((s.neuro && s.neuro.log) || []).length; return n ? [`${n} EEG session${n > 1 ? 's' : ''} saved`, 'good'] : ['EEG, decoders, implant design', 'muted']; }
       case 'logbook': { const wk = dayKey(OS.addDays(new Date(), -6)), n = (s.symptoms || []).filter((r) => r.at.slice(0, 10) >= wk).length; return n ? [`${n} symptom${n > 1 ? 's' : ''} this week`, 'warn'] : ['Every input on one timeline', 'muted']; }
       case 'wearables': { const on = ['oura', 'whoop'].filter((x) => s.wearables && s.wearables[x]); return on.length ? [`${on.map((x) => (x === 'oura' ? 'Oura' : 'WHOOP')).join(' and ')} connected`, 'good'] : ['Connect Oura or WHOOP', 'warn']; }
       case 'profile': return OS.auth && OS.auth.user ? ['Signed in · synced', 'good'] : ['Sign in to sync your devices', 'muted'];

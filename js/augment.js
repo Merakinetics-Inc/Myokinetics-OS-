@@ -128,7 +128,7 @@
         <div class="supp-grid">${TECH.exo.map(card).join('')}</div>`;
       if (tab === 'bci') body = `<section class="card"><div class="card-h"><h2>Neural feed</h2><span class="chip">Sample feed · EEG headband</span></div>
           <div class="au-eeg"><canvas id="au-eeg-cv" aria-label="EEG band power, sample feed"></canvas><ul class="sees" id="au-eeg-kv"></ul></div>
-          <p class="fine">A consumer EEG headband would stream here and into Myo's readiness. This is simulated until a headband is paired.</p></section>
+          <p class="fine">This panel is simulated. To connect a real headset, decode simple intents and size future implants, open the <a href="#bci">BCI lab</a>.</p></section>
         <div class="supp-grid">${TECH.bci.map(card).join('')}</div>`;
       if (tab === 'link') body = `<div class="banner" role="note"><strong>Where "neuro-telepathy" really stands.</strong> Labs have sent yes/no signals between brains at a few bits per minute. No technology transmits thoughts. Myo Mind-Link would share consented brain <em>states</em> from headbands, not thoughts.</div><div class="supp-grid">${TECH.link.map(card).join('')}</div>`;
       if (tab === 'body') body = `<div class="supp-grid">${TECH.body.map(card).join('')}</div>`;
