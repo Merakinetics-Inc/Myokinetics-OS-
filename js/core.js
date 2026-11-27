@@ -99,6 +99,10 @@
     logbook: '<path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M8 3v18M11 8h4.5M11 12h4.5M11 16h3"/>',
     twin: '<circle cx="7.5" cy="5" r="2.2"/><path d="M7.5 8v6M4.5 11h6M7.5 14l-2 6M7.5 14l2 6"/><circle cx="16.5" cy="5" r="2.2" stroke-dasharray="2 1.6"/><path d="M16.5 8v6M13.5 11h6M16.5 14l-2 6M16.5 14l2 6" stroke-dasharray="2 1.6"/>',
     surgery: '<path d="M4 20l9.5-9.5"/><path d="M13.5 10.5l5-5a2 2 0 0 1 2.8 2.8l-5 5z"/><path d="M5 5h4M7 3v4"/>',
+    insights: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/><circle cx="19" cy="6" r="2.5"/><path d="M17.2 7.8 15 10"/>',
+    cycle: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 7.6 5.5"/><circle cx="19.6" cy="9.5" r="1.6"/><path d="M12 9.5c1.5 1.7 2.2 2.9 2.2 3.8a2.2 2.2 0 0 1-4.4 0c0-.9.7-2.1 2.2-3.8z"/>',
+    env: '<circle cx="8" cy="8" r="3"/><path d="M8 2v1.5M8 12.5V14M2 8h1.5M12.5 8H14M3.8 3.8l1 1M11.2 11.2l1 1M3.8 12.2l1-1M11.2 4.8l1-1"/><path d="M10 20h9a3 3 0 0 0 0-6 4.5 4.5 0 0 0-8.6-1.5A3.8 3.8 0 0 0 10 20z"/>',
+    calendar: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h2M14 14h2M8 17h2"/>',
     phone: '<path d="M5 4h3.5l1.5 4.5-2.2 1.3a11 11 0 0 0 6.4 6.4l1.3-2.2L20 15.5V19a1.5 1.5 0 0 1-1.6 1.5C10.6 20 4 13.4 3.5 5.6A1.5 1.5 0 0 1 5 4z"/>',
     sos: '<path d="M12 3.5 21 19H3z"/><path d="M12 10v4.2M12 16.6v.4"/>',
     farm: '<path d="M12 21V11"/><path d="M12 11c0-3.5 2.5-6 6.5-6 0 3.8-2.6 6-6.5 6z"/><path d="M12 14c0-2.8-2-4.8-5.5-4.8 0 3 2.1 4.8 5.5 4.8z"/><path d="M4 21h16"/>',
@@ -440,7 +444,7 @@
   /* ── OS kernel: store, bus, router ───────────────────────────────── */
   const listeners = {};
   const OS = {
-    VERSION: '1.7.0', BUILD: 37, errors, logError,
+    VERSION: '1.8.0', BUILD: 38, errors, logError,
     esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
     seed, blank, hasValue, plausible, PLAUSIBLE, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
     views: {}, order: [], acts: {}, changes: {},

@@ -2480,6 +2480,49 @@ rect.fd-in { fill: var(--bc-c3); } rect.fd-out { fill: var(--bc-c1); } rect.fd-h
 .ch-log { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; max-height: 260px; overflow: auto; font: 12.5px var(--f-mono); }
 .ch-log time { color: var(--muted); } .ch-log li.st-bad { color: var(--bad); } .ch-log li.st-good b { color: var(--good); }
 .ch-stats b { font-size: 18px; }
+/* ── build 38: insights, cycle health, environment, care and calendar ── */
+.in-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.in-pair { margin: 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-sm); min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.in-pair figcaption { font-size: 13.5px; display: flex; flex-direction: column; gap: 2px; } .in-pair svg { width: 100%; height: auto; display: block; }
+.in-dot { fill: var(--bc-c1); fill-opacity: .75; stroke: var(--card); stroke-width: 1.5; }
+.in-week .spark { display: block; }
+.cy-week, .cy-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cy-week li { text-align: center; font-size: 11.5px; color: var(--muted); padding-bottom: 2px; }
+.cy-grid button { position: relative; width: 100%; aspect-ratio: 1; max-height: 52px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--fg); font: 600 13px var(--f-body); cursor: pointer; padding: 0; }
+.cy-grid button.cy-f1 { background: color-mix(in srgb, var(--bc-c2) 22%, var(--card)); }
+.cy-grid button.cy-f2 { background: color-mix(in srgb, var(--bc-c2) 45%, var(--card)); }
+.cy-grid button.cy-f3 { background: color-mix(in srgb, var(--bc-c2) 70%, var(--card)); color: #fff; }
+.cy-grid button.cy-f4 { background: var(--bc-c2); color: #fff; }
+.cy-grid button.cy-pred { border: 2px dashed var(--bc-c2); }
+.cy-grid button.cy-fert { box-shadow: inset 0 -5px 0 color-mix(in srgb, var(--bc-c3) 70%, transparent); }
+.cy-grid button.cy-today { outline: 2px solid var(--fg); outline-offset: 1px; }
+.cy-grid button.cy-sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.cy-sym { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--bc-c1); }
+.bc-sw.cy-sw-f { background: var(--bc-c2); } .bc-sw.cy-sw-pred { background: transparent; border: 2px dashed var(--bc-c2); width: 8px; height: 8px; } .bc-sw.cy-sw-fert { background: color-mix(in srgb, var(--bc-c3) 70%, transparent); } .bc-sw.cy-sw-sym { background: var(--bc-c1); border-radius: 50%; }
+.cy-flow { border: 0; padding: 0; margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 6px; } .cy-flow legend { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; padding: 0; }
+.cy-flow label.chip-btn { display: inline-flex; gap: 4px; align-items: center; }
+.cy-bar { position: relative; height: 14px; margin: 6px 0 12px; border-radius: 7px; background: color-mix(in srgb, var(--fg) 8%, transparent); overflow: hidden; }
+.cy-bar > i { position: absolute; top: 0; bottom: 0; } .cy-b-p { background: var(--bc-c2); } .cy-b-f { background: color-mix(in srgb, var(--bc-c3) 75%, transparent); }
+.cy-bar > b { position: absolute; top: -2px; bottom: -2px; width: 3px; margin-left: -1px; background: var(--fg); border-radius: 2px; }
+.cy-bars .fl-track > i { background: var(--bc-c2); }
+.env-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.env-mini { margin: 0; min-width: 0; } .env-mini svg { width: 100%; height: auto; display: block; }
+.env-ln { fill: none; stroke: var(--bc-c1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; } .env-hit { fill: transparent; }
+.env-best { font: 700 24px var(--f-mono); }
+.env .lb-tiles .pill { align-self: flex-start; margin-top: 4px; }
+.ca-days { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ca-days h3 { margin: 0 0 4px; font-size: 13px; color: var(--muted); font-weight: 600; } .ca-days ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.ca-cat { display: inline-block; min-width: 86px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.ca-cat.ca-urgent { color: var(--bad); font-weight: 700; }
+.ca-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ca-appt { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 10px 34px 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: 14px; }
+.ca-appt > .lb-del { position: absolute; top: 8px; right: 8px; }
+.ca-after { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; } .ca-after textarea, .ca textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 10px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--card); color: var(--fg); }
+.ca-q { margin: 0 0 10px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.nm-plot svg { width: 100%; height: auto; display: block; }
+.nm-x { fill: none; stroke: var(--muted); stroke-width: 1.2; } .nm-rec { fill: none; stroke: var(--bc-c1); stroke-width: 1.8; stroke-linejoin: round; }
+.nm-up { stroke: var(--bc-c3); stroke-width: 1.2; } .nm-dn { stroke: var(--bc-c2); stroke-width: 1.2; } .nm-ref { fill: var(--fg); } .nm-det { stroke: var(--fg); stroke-width: 1; stroke-dasharray: 3 3; opacity: .55; }
+.bc-sw.nm-sw-x { background: var(--muted); } .bc-sw.nm-sw-rec { background: var(--bc-c1); } .bc-sw.nm-sw-up { background: var(--bc-c3); } .bc-sw.nm-sw-dn { background: var(--bc-c2); } .bc-sw.nm-sw-ref { background: var(--fg); transform: rotate(45deg) scale(.7); } .bc-sw.nm-sw-det { width: 14px; height: 0; border-radius: 0; border-top: 2px dashed var(--fg); opacity: .55; vertical-align: 3px; }
 </style>
 <script>/* apply the saved look before first paint (js/look.js owns the picker) */(function(){var r=document.documentElement,l={};window.__myoHost=r.getAttribute('data-theme');try{l=JSON.parse(localStorage.getItem('myo-look')||'{}')||{}}catch(e){}r.setAttribute('data-scheme',typeof l.scheme==='string'?l.scheme:'clinical');r.setAttribute('data-fx',l.fx==='calm'?'calm':'full');if(l.mode==='light'||l.mode==='dark')r.setAttribute('data-theme',l.mode);})();</script>
 <div class="ambient" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
@@ -2559,6 +2602,10 @@ rect.fd-in { fill: var(--bc-c3); } rect.fd-out { fill: var(--bc-c1); } rect.fd-h
 <script src="js/food.js"></script>
 <script src="js/emergency.js"></script>
 <script src="js/chip.js"></script>
+<script src="js/insights.js"></script>
+<script src="js/cycle.js"></script>
+<script src="js/env.js"></script>
+<script src="js/care.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/look.js"></script>

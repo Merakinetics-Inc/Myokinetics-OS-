@@ -262,5 +262,5 @@ Member data (JSON): ${JSON.stringify(data)}`;
     OS.update((st) => { ensure(st).plan = { text, at: new Date().toISOString() }; });
   });
 
-  OS.longevity = { summary, phenoAge, phenoCalc, phenoReady, fitnessAge, vo2Target, ensure };
+  OS.longevity = { summary, phenoAge, phenoCalc, phenoReady, fitnessAge, vo2Target, ensure, SCREEN };
 })();
