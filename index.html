@@ -2421,6 +2421,65 @@ g.ht-p.sel line { stroke: var(--accent); }
 .wv-mini figcaption { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin-bottom: 6px; }
 .wv-mini svg { width: 100%; height: auto; display: block; }
 .wv-after { font-size: 12px; padding: 2px 4px; }
+/* ── build 37: food system, emergency, Myo chip ── */
+.sos-btn { flex: none; display: inline-grid; place-items: center; height: 30px; padding: 0 11px; border-radius: 15px; background: #c81e1e; color: #fff; font: 800 12px var(--f-body); letter-spacing: .06em; text-decoration: none; }
+.sos-btn:hover, .sos-btn:focus-visible { background: #a51616; color: #fff; }
+.em { display: flex; flex-direction: column; gap: 14px; }
+.em-call { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px; border-radius: var(--r-sm); background: #c81e1e; color: #fff; font: 700 22px var(--f-body); text-decoration: none; }
+.em-call:hover, .em-call:focus-visible { background: #a51616; color: #fff; }
+.em-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap: 8px; }
+.em-type { text-align: left; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); color: var(--fg); padding: 12px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; font: inherit; }
+.em-type b { font-size: 15px; } .em-type span { font-size: 12.5px; color: var(--muted); } .em-type:hover, .em-type:focus-visible { border-color: var(--bad); }
+.em-h { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 14px 0 6px; }
+.em-steps { margin: 0; padding-left: 24px; display: flex; flex-direction: column; gap: 8px; font-size: 17px; line-height: 1.45; }
+.em-steps.small { font-size: 14px; gap: 5px; margin-top: 12px; }
+.em-signs, .em-dont { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14.5px; }
+.em-dont li::marker { color: var(--bad); }
+.em-when { margin: 14px 0 0; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid color-mix(in srgb, var(--bad) 40%, var(--line)); background: color-mix(in srgb, var(--bad) 9%, var(--card)); font-size: 14.5px; }
+.em-proto .btn { margin-top: 12px; }
+.em-loc { font: 700 24px var(--f-mono); margin: 0 0 4px; overflow-wrap: anywhere; }
+.em-beatbox { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 0; }
+.em-beatbox > b { font: 700 44px var(--f-mono); color: var(--fg); } .em-beatbox > span { color: var(--muted); font-size: 14px; }
+.em-beat { display: block; width: 96px; height: 96px; border-radius: 50%; border: 3px solid var(--bad); background: color-mix(in srgb, var(--bad) 16%, transparent); }
+.em-beat.go { animation: em-pump .42s ease-out; }
+@keyframes em-pump { 0% { transform: scale(.8); background: color-mix(in srgb, var(--bad) 60%, transparent); } 100% { transform: scale(1); } }
+@keyframes em-flash { 0% { background: color-mix(in srgb, var(--bad) 60%, transparent); } 100% { background: color-mix(in srgb, var(--bad) 16%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .em-beat.go { animation: em-flash .42s ease-out; } }
+.em-go { font-size: 18px; padding: 12px 22px; }
+.em-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; margin: 0; }
+.em-dl dt { color: var(--muted); font-size: 13px; } .em-dl dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.em-kit { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; } .em-kit label { display: flex; gap: 8px; align-items: center; }
+.fd-cal svg { width: 100%; height: auto; display: block; }
+rect.fd-in { fill: var(--bc-c3); } rect.fd-out { fill: var(--bc-c1); } rect.fd-har { fill: var(--bc-c2); }
+.bc-sw.fd-in { background: var(--bc-c3); } .bc-sw.fd-out { background: var(--bc-c1); } .bc-sw.fd-har { background: var(--bc-c2); }
+.fd-now { stroke: var(--fg); stroke-width: 1.5; stroke-dasharray: 3 3; } .fd-frost { stroke: var(--muted); stroke-width: 1.5; }
+.bc-sw.fd-sw-now { width: 14px; height: 0; border-radius: 0; border-top: 2px dashed var(--fg); vertical-align: 3px; }
+.bc-sw.fd-sw-frost { width: 14px; height: 0; border-radius: 0; border-top: 2px solid var(--muted); vertical-align: 3px; }
+.fd-crop { fill: var(--fg); }
+.fd-pan { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.fd-pan li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.fd-video { width: 100%; max-height: 300px; margin-top: 10px; border-radius: var(--r-sm); background: #000; }
+.fd-prod h3 { margin: 12px 0 6px; } .fd-prod h4 { margin: 12px 0 6px; font-size: 13px; }
+.fd-grams { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; } .fd-grams input { width: 90px; }
+.fd-adds { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.fd-add { font-size: 12.5px; padding: 4px 9px; border-radius: 12px; border: 1px solid var(--line-2); }
+.fd-add.st-warn { border-color: color-mix(in srgb, var(--warn) 60%, var(--line)); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+.fd-add.st-bad { border-color: color-mix(in srgb, var(--bad) 60%, var(--line)); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.fd-plate { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.fd-list { margin: 0; padding-left: 18px; columns: 2; font-size: 14px; } @media (max-width: 520px) { .fd-list { columns: 1; } }
+.lb-grid label.fd-chk { flex-direction: row; align-items: center; align-self: end; gap: 8px; }
+.fd textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 10px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--card); color: var(--fg); }
+.ch-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ch-node { border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); padding: 10px 12px; }
+.ch-node h3 { margin: 0 0 4px; font-size: 15px; display: flex; gap: 6px; align-items: center; } .ch-node ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
+.ch-link { display: flex; align-items: center; gap: 10px; padding: 2px 0 2px 20px; font-size: 12.5px; color: var(--muted); }
+.ch-link::before { content: "\2193"; font-size: 18px; color: var(--accent); }
+.ch-hex { display: block; margin-top: 4px; padding: 8px; border-radius: 6px; font: 12px var(--f-mono); word-break: break-all; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+.ch-h { color: var(--bc-c1); } .ch-c { color: var(--bc-c2); } .ch-t { color: var(--bc-c3); }
+.bc-sw.ch-sw-h { background: var(--bc-c1); } .bc-sw.ch-sw-c { background: var(--bc-c2); } .bc-sw.ch-sw-t { background: var(--bc-c3); }
+.ch-log { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; max-height: 260px; overflow: auto; font: 12.5px var(--f-mono); }
+.ch-log time { color: var(--muted); } .ch-log li.st-bad { color: var(--bad); } .ch-log li.st-good b { color: var(--good); }
+.ch-stats b { font-size: 18px; }
 </style>
 <script>/* apply the saved look before first paint (js/look.js owns the picker) */(function(){var r=document.documentElement,l={};window.__myoHost=r.getAttribute('data-theme');try{l=JSON.parse(localStorage.getItem('myo-look')||'{}')||{}}catch(e){}r.setAttribute('data-scheme',typeof l.scheme==='string'?l.scheme:'clinical');r.setAttribute('data-fx',l.fx==='calm'?'calm':'full');if(l.mode==='light'||l.mode==='dark')r.setAttribute('data-theme',l.mode);})();</script>
 <div class="ambient" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
@@ -2433,6 +2492,7 @@ g.ht-p.sel line { stroke: var(--accent); }
     <nav id="topnav" class="topnav" aria-label="Main"></nav>
     <span class="hdr-sp"></span>
     <span class="save" id="save-state" aria-live="polite"></span>
+    <a class="sos-btn" href="#emergency" aria-label="Emergency: call and first aid" title="Emergency">SOS</a>
     <button class="pal-btn" id="pal-btn" type="button" data-act="find" aria-haspopup="dialog" aria-expanded="false" aria-label="Find anything" title="Find anything · Ctrl K"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
     <button class="look-btn" id="look-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="look-pop" aria-label="Appearance" title="Appearance: colour scheme and mode"></button>
     <div class="look-pop" id="look-pop" role="dialog" aria-label="Appearance" hidden></div>
@@ -2496,6 +2556,9 @@ g.ht-p.sel line { stroke: var(--accent); }
 <script src="js/flow.js"></script>
 <script src="js/pregnancy.js"></script>
 <script src="js/wave.js"></script>
+<script src="js/food.js"></script>
+<script src="js/emergency.js"></script>
+<script src="js/chip.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/look.js"></script>

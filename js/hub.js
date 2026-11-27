@@ -11,10 +11,10 @@
   const CLUSTERS = [
     { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['twin', 'body', 'atlas', 'heart', 'flow', 'bodycomp', 'biology', 'biochem', 'longevity', 'imaging', 'ultrasound', 'mirror'] },
     { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'wave', 'pt', 'surgery', 'function', 'mind', 'logbook'] },
-    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'bci', 'connect', 'evidence', 'profile', 'system'] },
-    { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'mode', 'score', 'coach', 'report'] },
+    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'bci', 'chip', 'connect', 'evidence', 'profile', 'system'] },
+    { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'emergency', 'mode', 'score', 'coach', 'report'] },
     { k: 'train', side: 'r', code: 'TRN·05', label: 'Training', items: ['training', 'motion', 'athlete', 'ar', 'machines', 'gym'] },
-    { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'kitchen', 'life', 'pregnancy', 'enhance', 'looks', 'augment'] }
+    { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'kitchen', 'food', 'life', 'pregnancy', 'enhance', 'looks', 'augment'] }
   ];
   // the five Myo Score systems; colours match the flyer and stay the same in every scheme
   const PARTS = [['biology', 'Biology', '#38bdf8'], ['recovery', 'Recovery', '#a78bfa'], ['training', 'Training', '#fb8a4a'], ['nutrition', 'Fuel', '#a3d65c'], ['life', 'Life', '#6b97ff']];
@@ -54,6 +54,9 @@
       case 'atlas': return ['Every system, embryo to old age', 'muted'];
       case 'flow': { const L = ((s.flow && s.flow.log) || []).slice(-1)[0]; return L && L.psv != null ? [`Last Doppler: peak ${L.psv} cm/s`, 'good'] : ['Doppler, perfusion, circulation', 'muted']; }
       case 'ultrasound': return ['Any scanner with a video output', 'muted'];
+      case 'food': { const st = OS.food && OS.food.status(s); return st || ['Grow, scan, additives, pesticides', 'muted']; }
+      case 'chip': return ['Implant concept and protocol simulator', 'muted'];
+      case 'emergency': { const I = s.emergency && s.emergency.id; return I && (I.allergies || I.conditions || I.blood) ? ['Medical ID ready · first aid offline', 'good'] : ['Add your medical ID', 'warn']; }
       case 'pregnancy': { const w = OS.pregnancy && OS.pregnancy.status(s); return w ? [`${w} pregnant`, 'good'] : ['Dates, scans and growth', 'muted']; }
       case 'wave': { const n = OS.wave && OS.wave.status(s); return n ? [n, 'good'] : ['StemWave and shockwave log', 'muted']; }
       case 'bodycomp': { if (OS.bodycomp && OS.bodycomp.ensure) OS.bodycomp.ensure(s); const xs =((s.bodycomp && s.bodycomp.scans) || []).slice().sort((a, b) => a.d.localeCompare(b.d)), L = xs[xs.length - 1]; return L ? [`${L.bf != null ? `Body fat ${L.bf}%` : `${L.w} kg`} · ${L.kind === 'dexa' ? 'DEXA' : 'scale'} ${OS.fmtDate(L.d)}`, 'good'] : ['Smart scale and DEXA', 'muted']; }

@@ -3,7 +3,7 @@
    with the cached copy when offline. Large models (anatomy meshes, MoveNet): cache first, they rarely change.
    Pinned libraries and fonts from CDNs: cache first (their URLs carry versions).
    Supabase, wearables, the Ingest API, Myo AI and anything else: straight to the network, never stored. */
-const VERSION = 'myo-1.6.0-36-202611270707';            // tools/build-site.ps1 appends the build time
+const VERSION = 'myo-1.7.0-37-202611271948';            // tools/build-site.ps1 appends the build time
 const APP = `${VERSION}-app`, MODELS = 'myo-models-v1', LIBS = 'myo-libs-v1';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'privacy.html', 'terms.html', 'oauth-done.html', 'share.html', 'js/share-view.js',
@@ -11,7 +11,7 @@ const SHELL = [
   'js/core.js', 'js/anatomy.js', 'js/health.js', 'js/train.js', 'js/videos.js', 'js/ar.js', 'js/scan.js', 'js/athlete.js',
   'js/enhance.js', 'js/longevity.js', 'js/wearables.js', 'js/imaging.js', 'js/function.js', 'js/augment.js',
   'js/anatomy3d.js', 'js/welcome.js', 'js/recovery.js', 'js/pt.js', 'js/sleep.js', 'js/looks.js', 'js/connect.js', 'js/avatar.js',
-  'js/gym.js', 'js/coach.js', 'js/system.js', 'js/hub.js', 'js/report.js', 'js/rights.js', 'js/palette.js', 'js/myoai.js', 'js/kitchen.js', 'js/motion.js', 'js/biochem.js', 'js/research.js', 'js/score.js', 'js/mode.js', 'js/mind.js', 'js/lifespan.js', 'js/heart.js', 'js/stream.js', 'js/logbook.js', 'js/bodycomp.js', 'js/bci.js', 'js/twin.js', 'js/surgery.js', 'js/atlas.js', 'js/ultrasound.js', 'js/flow.js', 'js/pregnancy.js', 'js/wave.js',
+  'js/gym.js', 'js/coach.js', 'js/system.js', 'js/hub.js', 'js/report.js', 'js/rights.js', 'js/palette.js', 'js/myoai.js', 'js/kitchen.js', 'js/motion.js', 'js/biochem.js', 'js/research.js', 'js/score.js', 'js/mode.js', 'js/mind.js', 'js/lifespan.js', 'js/heart.js', 'js/stream.js', 'js/logbook.js', 'js/bodycomp.js', 'js/bci.js', 'js/twin.js', 'js/surgery.js', 'js/atlas.js', 'js/ultrasound.js', 'js/flow.js', 'js/pregnancy.js', 'js/wave.js', 'js/food.js', 'js/emergency.js', 'js/chip.js',
   'js/config.js', 'js/auth.js', 'js/look.js', 'js/boot.js'
 ];
 const LIB_HOSTS = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com', 'storage.googleapis.com'];

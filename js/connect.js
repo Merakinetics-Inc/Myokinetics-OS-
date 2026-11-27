@@ -38,6 +38,7 @@
     ['hume', 'body', 'Hume Pod', 'Pod, Pod 2.0', "Through the Hume app's Apple Health sync (export.zip), CSV or quick entry", 'Body composition', 'file', 'go:bodycomp'],
     ['dexa', 'body', 'DEXA body-composition reports', 'Hospital and clinic DXA, body-composition studios', 'PDF report read on this device, pasted text, or by hand', 'Body composition', 'file', 'go:bodycomp'],
     ['withings', 'body', 'Withings', 'Body scales, BPM, Sleep Analyzer', 'Withings API (OAuth app keys)', 'Weight, blood pressure, sleep', 'partner', 'tab:api'],
+    ['myochip', 'body', 'Myo chip (concept)', 'Implantable Myo sensor: ECG, temperature, motion, bio-impedance', 'Bluetooth LE with NFC pairing; design and protocol simulator only', 'Live sensors, Digital twin', 'planned', 'go:chip'],
     ['ultrasound', 'body', 'Ultrasound scanners', 'Cart and portable scanners with HDMI, VGA or S-video out; handheld probe apps', 'USB video capture, screen share, or an exported clip or image, on this device', 'Live ultrasound, Pregnancy, Blood flow', 'live', 'go:ultrasound'],
     ['doppler', 'cardio', 'Pocket vascular Dopplers', 'Any pocket Doppler with a headphone output or speaker', 'Line-in or microphone audio, or a recording', 'Blood flow: velocity, RI, PI, artery or vein pattern', 'live', 'go:flow'],
     ['dicom', 'body', 'Imaging (CT, MRI, DEXA)', 'Any DICOM export', 'DICOM folder import on this device', 'Imaging', 'live', 'go:imaging'],

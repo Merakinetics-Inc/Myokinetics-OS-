@@ -59,7 +59,7 @@
         <label class="lb-wide">Note (optional)<input name="note" maxlength="200" placeholder="What were you doing? Anything that helped?"></label>
         <div class="lb-wide"><button class="btn sm">${icon('plus', 14)} Save to log book</button></div>
       </form>
-      ${red ? `<div class="banner bad" role="alert"><b>${esc(LB.red)}.</b> ${esc(red)}</div>` : ''}
+      ${red ? `<div class="banner bad" role="alert"><b>${esc(LB.red)}.</b> ${esc(red)} <a href="#emergency">Open Emergency</a></div>` : ''}
       <p class="fine">For tracking, not diagnosis. Myo won't suggest what a symptom means; it helps you spot patterns and bring a clear record to your clinician.</p></section>`;
   }
   function noteForm() {
