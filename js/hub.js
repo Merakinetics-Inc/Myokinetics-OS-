@@ -11,7 +11,7 @@
   const CLUSTERS = [
     { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['twin', 'body', 'atlas', 'heart', 'flow', 'bodycomp', 'biology', 'biochem', 'longevity', 'imaging', 'ultrasound', 'mirror'] },
     { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'wave', 'pt', 'surgery', 'function', 'mind', 'logbook'] },
-    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'bci', 'chip', 'connect', 'evidence', 'profile', 'system'] },
+    { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'face', 'bci', 'chip', 'cases', 'academy', 'connect', 'evidence', 'profile', 'system'] },
     { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'care', 'insights', 'emergency', 'mode', 'score', 'coach', 'report'] },
     { k: 'train', side: 'r', code: 'TRN·05', label: 'Training', items: ['training', 'motion', 'athlete', 'ar', 'machines', 'gym'] },
     { k: 'life', side: 'r', code: 'LIF·06', label: 'Fuel, life and looks', items: ['fuel', 'kitchen', 'food', 'env', 'life', 'cycle', 'pregnancy', 'enhance', 'looks', 'augment'] }
@@ -56,6 +56,9 @@
       case 'ultrasound': return ['Any scanner with a video output', 'muted'];
       case 'food': { const st = OS.food && OS.food.status(s); return st || ['Grow, scan, additives, pesticides', 'muted']; }
       case 'chip': return ['Implant concept and protocol simulator', 'muted'];
+      case 'face': { const st = OS.face && OS.face.status(s); return st || ['Silent commands and face scan', 'muted']; }
+      case 'cases': { try { return OS.cases.status(s); } catch { return ['Provider assessment process', 'muted']; } }
+      case 'academy': { const st = OS.academy && OS.academy.status(); return st || ['Lessons and practice cases', 'muted']; }
       case 'insights': { const st = OS.insights && OS.insights.status(s); return st || ['Patterns and experiments', 'muted']; }
       case 'cycle': { const st = OS.cycle && OS.cycle.status(s); return st || ['Periods, phases, menopause', 'muted']; }
       case 'env': { const st = OS.env && OS.env.status(s); return st || ['Set your place for air and UV', 'muted']; }

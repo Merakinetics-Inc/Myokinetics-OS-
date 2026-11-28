@@ -38,6 +38,8 @@
     ['hume', 'body', 'Hume Pod', 'Pod, Pod 2.0', "Through the Hume app's Apple Health sync (export.zip), CSV or quick entry", 'Body composition', 'file', 'go:bodycomp'],
     ['dexa', 'body', 'DEXA body-composition reports', 'Hospital and clinic DXA, body-composition studios', 'PDF report read on this device, pasted text, or by hand', 'Body composition', 'file', 'go:bodycomp'],
     ['withings', 'body', 'Withings', 'Body scales, BPM, Sleep Analyzer', 'Withings API (OAuth app keys)', 'Weight, blood pressure, sleep', 'partner', 'tab:api'],
+    ['facecam', 'cardio', 'Front camera and microphone', 'Any phone, tablet or laptop', 'On-device face tracking and audio, nothing uploaded', 'Face and voice: silent commands, face scan, voice in noise', 'live', 'go:face'],
+    ['openfda', 'clinical', 'FDA medicine data', 'openFDA drug labels and FAERS adverse-event reports', 'Live, by medicine name only; dosing sections never shown', 'Case assessment', 'live', 'go:cases'],
     ['calendar', 'clinical', 'Calendars', 'Apple, Google, Outlook and any .ics calendar', 'Calendar file (.ics) of appointments, routines and Myo dates', 'Care and calendar', 'file', 'go:care'],
     ['openmeteo', 'recovery', 'Weather and air quality', 'Open-Meteo: national weather services and the CAMS air-quality model', 'Live, by place name or rounded location', 'Environment', 'live', 'go:env'],
     ['myochip', 'body', 'Myo chip (concept)', 'Implantable Myo sensor: ECG, temperature, motion, bio-impedance', 'Bluetooth LE with NFC pairing; design and protocol simulator only', 'Live sensors, Digital twin', 'planned', 'go:chip'],

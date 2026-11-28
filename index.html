@@ -2523,6 +2523,44 @@ rect.fd-in { fill: var(--bc-c3); } rect.fd-out { fill: var(--bc-c1); } rect.fd-h
 .nm-x { fill: none; stroke: var(--muted); stroke-width: 1.2; } .nm-rec { fill: none; stroke: var(--bc-c1); stroke-width: 1.8; stroke-linejoin: round; }
 .nm-up { stroke: var(--bc-c3); stroke-width: 1.2; } .nm-dn { stroke: var(--bc-c2); stroke-width: 1.2; } .nm-ref { fill: var(--fg); } .nm-det { stroke: var(--fg); stroke-width: 1; stroke-dasharray: 3 3; opacity: .55; }
 .bc-sw.nm-sw-x { background: var(--muted); } .bc-sw.nm-sw-rec { background: var(--bc-c1); } .bc-sw.nm-sw-up { background: var(--bc-c3); } .bc-sw.nm-sw-dn { background: var(--bc-c2); } .bc-sw.nm-sw-ref { background: var(--fg); transform: rotate(45deg) scale(.7); } .bc-sw.nm-sw-det { width: 14px; height: 0; border-radius: 0; border-top: 2px dashed var(--fg); opacity: .55; vertical-align: 3px; }
+/* ── build 39: case assessment and Myo Academy ── */
+.cs-steps { list-style: none; margin: 0 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.cs-steps button { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line-2); border-radius: 18px; padding: 6px 12px; background: var(--card); color: var(--fg); font: 600 13px var(--f-body); cursor: pointer; }
+.cs-steps button b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: color-mix(in srgb, var(--fg) 10%, transparent); font-size: 11px; }
+.cs-steps button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); } .cs-steps button.on b { background: var(--accent); color: #fff; }
+.cs-steps button.done b { background: var(--good); color: #fff; }
+.cs-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cs-list > li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: 14px; }
+.cs-list > li > span.small { flex-basis: 100%; }
+.cs-src { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line-2); color: var(--accent); text-decoration: none; background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.cs-pick { display: flex; gap: 8px; align-items: center; }
+.cs-plan { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; margin: 0 0 12px; } .cs-plan h3 { margin: 0 0 4px; font-size: 15px; } .cs-plan p { margin: 2px 0; }
+.cs textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 10px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--card); color: var(--fg); }
+.cs-pubs { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; } .cs-pubs .small { display: block; }
+.cs-log { max-height: 340px; }
+.ac-wrap { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .ac-wrap { grid-template-columns: minmax(0, 1fr); } }
+.ac-nav ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ac-nav button { width: 100%; text-align: left; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px 10px; background: var(--card); color: var(--fg); font: 500 13.5px var(--f-body); cursor: pointer; }
+.ac-nav button b { color: var(--muted); font-size: 12px; } .ac-nav button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.ac-lesson p { font-size: 15px; line-height: 1.55; } .ac-lesson h3 { margin: 18px 0 8px; font-size: 15px; }
+.ac-q { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; margin: 0 0 10px; display: flex; flex-direction: column; gap: 6px; }
+.ac-q legend { font-weight: 600; font-size: 14px; padding: 0 4px; } .ac-q label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.ac-q label.ac-right { color: var(--good); font-weight: 600; } .ac-q label.ac-wrong { color: var(--bad); text-decoration: line-through; }
+/* ── build 40: face and voice ── */
+.fv-stage { position: relative; max-width: 560px; aspect-ratio: 4 / 3; border-radius: var(--r-sm); overflow: hidden; background: #05070b; margin: 6px 0; }
+.fv-cv { width: 100%; height: 100%; display: block; object-fit: cover; }
+.fv-off { position: absolute; inset: 0; display: grid; place-items: center; color: #9aa6b8; font-size: 14px; }
+.fv-meter { height: 8px; max-width: 560px; border-radius: 4px; background: color-mix(in srgb, var(--fg) 8%, transparent); overflow: hidden; } .fv-meter i { display: block; height: 100%; width: 0; background: var(--bc-c1); transition: width .1s; }
+.fv-msg { min-height: 1.4em; font-weight: 600; margin: 6px 0; }
+.fv-tpl { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; } .fv-tpl li { display: flex; gap: 6px; align-items: center; }
+.fv-pill { position: fixed; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 60; display: flex; gap: 8px; align-items: center; padding: 8px 10px 8px 12px; border-radius: 22px; background: var(--card); color: var(--fg); border: 1px solid var(--line-2); box-shadow: 0 6px 20px rgba(0,0,0,.18); font: 600 13px var(--f-body); max-width: calc(100vw - 32px); }
+.fv-pill button { border: 0; border-radius: 14px; padding: 4px 10px; background: var(--btn); color: var(--btn-fg); font: 600 12px var(--f-body); cursor: pointer; }
+.fv-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent); animation: fv-pulse 1.6s infinite; flex: none; }
+@keyframes fv-pulse { 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .fv-dot { animation: none; } }
+.fv-spec { margin: 10px 0 0; } .fv-spec canvas { width: 100%; height: 160px; display: block; border-radius: var(--r-sm); background: #05070b; }
+.fv-expr .fl-track > i { background: var(--bc-c1); }
 </style>
 <script>/* apply the saved look before first paint (js/look.js owns the picker) */(function(){var r=document.documentElement,l={};window.__myoHost=r.getAttribute('data-theme');try{l=JSON.parse(localStorage.getItem('myo-look')||'{}')||{}}catch(e){}r.setAttribute('data-scheme',typeof l.scheme==='string'?l.scheme:'clinical');r.setAttribute('data-fx',l.fx==='calm'?'calm':'full');if(l.mode==='light'||l.mode==='dark')r.setAttribute('data-theme',l.mode);})();</script>
 <div class="ambient" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
@@ -2606,6 +2644,9 @@ rect.fd-in { fill: var(--bc-c3); } rect.fd-out { fill: var(--bc-c1); } rect.fd-h
 <script src="js/cycle.js"></script>
 <script src="js/env.js"></script>
 <script src="js/care.js"></script>
+<script src="js/cases.js"></script>
+<script src="js/academy.js"></script>
+<script src="js/face.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/look.js"></script>
