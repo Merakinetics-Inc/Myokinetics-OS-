@@ -9,7 +9,7 @@ member to care.
 
 ## What is in this release
 
-57 pages, installable as an app (PWA) and working offline.
+56 pages on the public site, installable as an app (PWA) and working offline. (X-ray Mirror, the 57th, stays out of the public site until its author grants permission.)
 
 | Area | Pages |
 |---|---|
