@@ -60,12 +60,15 @@
       } catch { return set('member', 'viewer'); }
     }
     const a = OS.auth;
-    if (!a || !a.ready) return set('member', 'signed-out', 'checking');
+    if (!a || !a.staffRole) return set('member', 'signed-out');   // no account module (or an older one): member
+    if (!a.ready) { setTimeout(() => { if (R.status === 'checking' && !OS.auth.ready) set('member', 'signed-out'); }, 10000); return set('member', 'signed-out', 'checking'); }
     const u = a.user;
     if (!u) { R.uid = null; R.err = ''; return set('member', 'signed-out'); }
     if (R.uid === u.id) return;   // already looked up (or looking up) for this account
     R.uid = u.id; set(R.role, R.source, 'checking');
-    const { role, error } = await a.staffRole();
+    // never leave a page on "Checking" when the database is slow: settle as member after 10 seconds
+    const { role, error } = await Promise.race([a.staffRole(), new Promise((r) => setTimeout(() => r({ role: null, error: "Couldn't check your staff role just now. Reload to try again." }), 10000))]);
+    if (R.uid !== u.id) return;   // signed out or switched account meanwhile
     R.err = error || '';
     set(role || 'member', 'account');
   }
