@@ -1247,6 +1247,8 @@ input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px color-mix(in s
 .sheet-grid a span { color: var(--accent); display: grid; }
 #view { max-width: 1320px; }
 @media (max-width: 1120px) { .tn-i { padding: 8px 12px; } .logo span { display: none; } .logo .logo-mk { display: grid; } }
+@media (max-width: 1080px) { .tn-i { padding: 8px 9px; } .chip-score span { display: none; } .hdr { gap: 8px; } }
+@media (max-width: 980px) { .tn-i { padding: 8px 7px; font-size: 13.5px; gap: 4px; } }
 @media (max-width: 900px) {
   .topnav { display: none; }
   .app { grid-template-rows: auto 1fr auto; }
@@ -2561,6 +2563,100 @@ rect.fd-in { fill: var(--bc-c3); } rect.fd-out { fill: var(--bc-c1); } rect.fd-h
 @media (prefers-reduced-motion: reduce) { .fv-dot { animation: none; } }
 .fv-spec { margin: 10px 0 0; } .fv-spec canvas { width: 100%; height: 160px; display: block; border-radius: var(--r-sm); background: #05070b; }
 .fv-expr .fl-track > i { background: var(--bc-c1); }
+/* ══ Staff roles (js/roles.js) ══ */
+.role-lock { display: flex; gap: 16px; align-items: flex-start; }
+.role-lock-ic { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--card-2); color: var(--muted); }
+.role-lock h2 { margin: 0 0 6px; font-size: 18px; }
+.role-lock p { margin: 0 0 8px; }
+.role-ladder { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 6px; }
+.role-ladder li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: baseline; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; opacity: .55; }
+.role-ladder li.on { opacity: 1; border-color: color-mix(in srgb, var(--good) 45%, var(--line)); }
+.role-prev { max-width: 240px; margin-top: 8px; }
+.role-staff { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+.role-staff h3 { margin: 0 0 8px; font-size: 15px; }
+@media (max-width: 560px) { .role-ladder li { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ══ Cancer screening (js/cancer.js) ══ */
+.cx a:not(.btn), .le a:not(.btn) { color: var(--accent); text-underline-offset: 2px; }
+.cx-plan, .cx-signs, .cx-prev, .cx-abcde, .cx-sig, .cx-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cx-p { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.cx-p p { margin: 4px 0 0; }
+.cx-p.st-due, .cx-p.st-follow { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+.cx-ph { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cx-risk { display: grid; gap: 12px; }
+.cx-risk fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 0; display: grid; gap: 6px; }
+.cx-risk legend { font-size: 12px; color: var(--muted); padding: 0 4px; }
+.cx-chk { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.cx-chk input { margin-top: 3px; }
+.cx-sm { margin-top: 8px; }
+.cx-inline input { max-width: 120px; }
+.cx-now { border-color: color-mix(in srgb, var(--bad) 50%, var(--line)); }
+.cx-now h2 { display: flex; gap: 8px; align-items: center; }
+.cx-now ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.cx-signs li label { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.cx-signs li label:has(input:checked) { border-color: color-mix(in srgb, var(--warn) 60%, var(--line)); background: color-mix(in srgb, var(--warn) 8%, var(--card)); }
+.cx-signs input { margin-top: 3px; }
+.cx-abcde li { display: grid; grid-template-columns: 34px 92px 1fr; gap: 10px; align-items: center; }
+.cx-l { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--card-2); font-weight: 700; }
+.cx-prev { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.cx-prev li, .cx-sig li { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 4px; }
+.cx-sig li.lvl-warn { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+.cx-sig p { margin: 0; }
+.cx-tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.cx-tests article { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.cx-tests h3 { margin: 0 0 4px; font-size: 15px; }
+.cx-tests p { margin: 4px 0 0; }
+.cx-log li { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.cx-log li:last-child { border-bottom: 0; }
+@media (max-width: 560px) { .cx-abcde li { grid-template-columns: 34px 1fr; } .cx-abcde li span.muted { grid-column: 2; } }
+
+/* ══ Learn biology (js/learn.js) ══ */
+.le-sum { display: grid; gap: 10px; }
+.le-prog { display: flex; align-items: baseline; gap: 10px; }
+.le-prog b { font-size: 34px; line-height: 1; } .le-prog small { font-size: 16px; color: var(--muted); }
+.le-bar { height: 8px; border-radius: 99px; background: var(--card-2); overflow: hidden; }
+.le-bar i { display: block; height: 100%; background: var(--bc-c1); border-radius: 99px; }
+.le-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.le-unit { text-align: left; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; column-gap: 10px; row-gap: 4px; align-items: center; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--fg); font: inherit; cursor: pointer; }
+.le-unit:hover { border-color: var(--line-2); }
+.le-unit .le-n { grid-column: 1; grid-row: 1; font-size: 11px; color: var(--muted); }
+.le-unit .le-ic { grid-column: 2; grid-row: 1; justify-self: end; color: var(--muted); }
+.le-unit b { grid-column: 1 / -1; font-size: 15px; }
+.le-unit .muted { grid-column: 1 / -1; }
+.le-unit .pill { grid-column: 1 / -1; justify-self: start; }
+.le-back { margin-bottom: 4px; }
+.le-lesson h2 { display: flex; gap: 8px; align-items: center; }
+.le-pts { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.le-pts p { margin: 2px 0 0; }
+.le-pts li.st-bad b, .le-pts li.st-warn b { color: var(--warn); }
+.le-q { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 0 0 10px; display: grid; gap: 6px; }
+.le-q legend { font-weight: 600; padding: 0 4px; }
+.le-q.ok { border-color: color-mix(in srgb, var(--good) 55%, var(--line)); }
+.le-q.no { border-color: color-mix(in srgb, var(--warn) 60%, var(--line)); }
+.le-o { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; }
+.le-o input { margin-top: 3px; }
+.le-o.right { background: color-mix(in srgb, var(--good) 12%, transparent); }
+.le-o.wrong { background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.le-opts { display: grid; gap: 6px; }
+.le-ob { border: 1px solid var(--line); background: var(--card); color: var(--fg); font: inherit; text-align: left; cursor: pointer; padding: 10px 12px; }
+.le-ob:hover { border-color: var(--line-2); }
+.le-why { margin: 4px 0 0; }
+.le-chart { position: relative; margin: 0; }
+.le-chart svg { width: 100%; height: auto; display: block; touch-action: pan-y; }
+line.le-gl { stroke: var(--line); stroke-width: 1; }
+.le-ax { fill: var(--muted); font-size: 10px; font-family: inherit; }
+.le-ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.le-ln.bc-l1 { stroke: var(--bc-c1); } .le-ln.bc-l2 { stroke: var(--bc-c2); } .le-ln.bc-l3 { stroke: var(--bc-c3); }
+.le-dip { fill: color-mix(in srgb, var(--warn) 14%, transparent); }
+.le-x { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.le-hit { fill: transparent; cursor: crosshair; }
+.le-tip { position: absolute; top: 6px; min-width: 130px; padding: 8px 10px; border-radius: 10px; background: var(--card); border: 1px solid var(--line-2); box-shadow: var(--shadow); font-size: 12px; display: grid; gap: 2px; pointer-events: none; }
+.le-tip i, .le-key i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.le-key { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+i.bc-l1 { background: var(--bc-c1); } i.bc-l2 { background: var(--bc-c2); } i.bc-l3 { background: var(--bc-c3); }
+.le-key i.le-dipkey { height: 10px; background: color-mix(in srgb, var(--warn) 30%, transparent); }
+.le-find h3 { margin: 0 0 4px; font-size: 14px; }
+.le-find ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 </style>
 <script>/* apply the saved look before first paint (js/look.js owns the picker) */(function(){var r=document.documentElement,l={};window.__myoHost=r.getAttribute('data-theme');try{l=JSON.parse(localStorage.getItem('myo-look')||'{}')||{}}catch(e){}r.setAttribute('data-scheme',typeof l.scheme==='string'?l.scheme:'clinical');r.setAttribute('data-fx',l.fx==='calm'?'calm':'full');if(l.mode==='light'||l.mode==='dark')r.setAttribute('data-theme',l.mode);})();</script>
 <div class="ambient" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
@@ -2647,7 +2743,10 @@ rect.fd-in { fill: var(--bc-c3); } rect.fd-out { fill: var(--bc-c1); } rect.fd-h
 <script src="js/cases.js"></script>
 <script src="js/academy.js"></script>
 <script src="js/face.js"></script>
+<script src="js/cancer.js"></script>
+<script src="js/learn.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/roles.js"></script>
 <script src="js/look.js"></script>
 <script src="js/boot.js"></script>

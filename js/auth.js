@@ -182,7 +182,7 @@
   }
   const syncText = () => A.syncErr ? `<span class="acct-err">${esc(A.syncErr)}</span>` : A.conflict ? 'Paused' : A.syncedAt ? `On · last saved ${esc(when(A.syncedAt))}` : 'Starting…';
   function paintSync() { const el = document.getElementById('acct-sync'); if (el) el.innerHTML = syncText(); }
-  function refresh() { OS.emit('header'); if (OS.current === 'profile' && OS.state) OS.render(); }
+  function refresh() { OS.emit('header'); OS.emit('auth'); if (OS.current === 'profile' && OS.state) OS.render(); }
   const focusLater = (id) => setTimeout(() => { const el = document.getElementById(id); if (el) el.focus(); }, 30);
   const here = () => location.origin + location.pathname;
 
@@ -243,8 +243,22 @@
     refresh();
   });
 
+  // database functions as the signed-in member; errors come back as plain sentences
+  async function rpc(name, args) {
+    if (!A.sb || !A.user) return { data: null, error: 'Sign in first.' };
+    try {
+      const { data, error } = await A.sb.rpc(name, args || {});
+      if (error) return { data: null, error: /could not find the function|does not exist|schema cache/i.test(error.message || '') ? "Staff roles aren't switched on for this Myo project yet (the staff_roles migration needs deploying)." : /only admins/i.test(error.message || '') ? 'Only admins can do that.' : /no Myo account/i.test(error.message || '') ? 'No Myo account uses that email. Ask them to sign in once first.' : /own role/i.test(error.message || '') ? "Admins can't change their own role. Ask another admin." : friendly(error) };
+      return { data, error: '' };
+    } catch (e) { return { data: null, error: friendly(e) }; }
+  }
+
   OS.auth = {
     get user() { return A.user; },
+    get ready() { return A.ready; },
+    rpc,
+    // the signed-in account's staff role (coach, clinician, admin) or null for a member (migration 20261128090000)
+    async staffRole() { const { data, error } = await rpc('my_staff_role'); return { role: error ? null : data || null, error }; },
     get url() { const c = cfg(); return c ? c.url : ''; },   // the Supabase project, for the Ingest API and other functions
     initials: () => (A.user ? initials(A.user) : ''),
     async token() { if (!A.sb || !A.session) return null; try { const { data } = await A.sb.auth.getSession(); return data.session ? data.session.access_token : null; } catch { return null; } },

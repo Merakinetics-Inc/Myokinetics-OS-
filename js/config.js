@@ -9,5 +9,6 @@ window.MYO_CONFIG = window.MYO_CONFIG || {
   wearablesProxy: 'https://bnunlrbinlssvbycrvps.supabase.co/functions/v1/wearables', // e.g. https://your-project.supabase.co/functions/v1/wearables (supabase/WEARABLES_PROXY.md)
   ingestApi: 'https://bnunlrbinlssvbycrvps.supabase.co/functions/v1/ingest',      // e.g. https://your-project.supabase.co/functions/v1/ingest (supabase/INGEST_API.md); defaults to the project's
   myoAi: 'https://bnunlrbinlssvbycrvps.supabase.co/functions/v1/myo-ai',          // Myo AI for signed-in members (supabase/MYO_AI.md); answers once ANTHROPIC_API_KEY is set
+  contentScan: 'https://bnunlrbinlssvbycrvps.supabase.co/functions/v1/content-scan', // lesson attention test, admins only (supabase/CONTENT_SCAN.md); answers once SAPIENT_API_KEY is set
   oauthProviders: []                                                              // add 'google' and/or 'apple' once they are enabled in Supabase Auth
 };

@@ -512,6 +512,7 @@
       const f = (id, label, input) => `<label class="field" for="${id}"><span>${label}</span>${input}</label>`;
       return `${head('Member', 'Profile and data', '')}
       ${OS.auth ? OS.auth.card() : ''}
+      ${OS.roles ? OS.roles.card() : ''}
       <div class="grid g-2">
         <section class="card">
           <div class="card-h"><h2>About you</h2></div>

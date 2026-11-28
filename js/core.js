@@ -116,7 +116,10 @@
     wave: '<path d="M3 12h5"/><path d="M11 8.5a4.5 4.5 0 0 1 0 7"/><path d="M14.5 5.5a9 9 0 0 1 0 13"/><path d="M18 3a12.5 12.5 0 0 1 0 18"/>',
     atlas: '<path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><circle cx="12" cy="8.5" r="2"/><path d="M12 10.5v4.5M9.5 12.5h5"/>',
     scale: '<rect x="3.5" y="4" width="17" height="16" rx="4"/><path d="M8 10.5a5 5 0 0 1 8 0"/><path d="M12 10.6l1.8-2.1"/>',
-    bci: '<path d="M12 5.5a3 3 0 0 0-5.6-1.1A3 3 0 0 0 4 9a3 3 0 0 0 .4 5.3A3 3 0 0 0 8.6 19 2.6 2.6 0 0 0 12 18.4z"/><path d="M12 5.5a3 3 0 0 1 5.6-1.1A3 3 0 0 1 20 9"/><path d="M14 13h2l1.2-2.6 1.6 5 1.2-2.4H22"/>'
+    bci: '<path d="M12 5.5a3 3 0 0 0-5.6-1.1A3 3 0 0 0 4 9a3 3 0 0 0 .4 5.3A3 3 0 0 0 8.6 19 2.6 2.6 0 0 0 12 18.4z"/><path d="M12 5.5a3 3 0 0 1 5.6-1.1A3 3 0 0 1 20 9"/><path d="M14 13h2l1.2-2.6 1.6 5 1.2-2.4H22"/>',
+    lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/>',
+    cancer: '<path d="M12 13.2c-2.6-3-4-5.4-4-7.2a4 4 0 0 1 8 0c0 1.8-1.4 4.2-4 7.2z"/><path d="M12 13.2 7.5 21M12 13.2 16.5 21"/>',
+    learn: '<path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/>'
   };
   const icon = (n, s = 20) => `<svg class="ico" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -447,7 +450,7 @@
   /* ── OS kernel: store, bus, router ───────────────────────────────── */
   const listeners = {};
   const OS = {
-    VERSION: '1.10.0', BUILD: 40, errors, logError,
+    VERSION: '1.11.0', BUILD: 41, errors, logError,
     esc, clamp, lerp, uid, dayKey, addDays, fmtDate, fmt, spark, ring, pill, icon,
     seed, blank, hasValue, plausible, PLAUSIBLE, dash, scores, targets, protocol, markerEval, Persist, peakOf, redFlags, TERMS,
     views: {}, order: [], acts: {}, changes: {},

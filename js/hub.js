@@ -9,7 +9,7 @@
   const { esc, icon, dayKey, targets, protocol } = OS;
 
   const CLUSTERS = [
-    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['twin', 'body', 'atlas', 'heart', 'flow', 'bodycomp', 'biology', 'biochem', 'longevity', 'imaging', 'ultrasound', 'mirror'] },
+    { k: 'body', side: 'l', code: 'BIO·01', label: 'Body and biology', items: ['twin', 'body', 'atlas', 'learn', 'heart', 'flow', 'bodycomp', 'biology', 'biochem', 'longevity', 'cancer', 'imaging', 'ultrasound', 'mirror'] },
     { k: 'restore', side: 'l', code: 'REC·02', label: 'Sleep and recovery', items: ['sleep', 'recovery', 'wave', 'pt', 'surgery', 'function', 'mind', 'logbook'] },
     { k: 'data', side: 'l', code: 'NET·03', label: 'Data and devices', items: ['wearables', 'stream', 'face', 'bci', 'chip', 'cases', 'academy', 'connect', 'evidence', 'profile', 'system'] },
     { k: 'day', side: 'r', code: 'DAY·04', label: 'Your day', items: ['welcome', 'today', 'care', 'insights', 'emergency', 'mode', 'score', 'coach', 'report'] },
@@ -58,6 +58,8 @@
       case 'chip': return ['Implant concept and protocol simulator', 'muted'];
       case 'face': { const st = OS.face && OS.face.status(s); return st || ['Silent commands and face scan', 'muted']; }
       case 'cases': { try { return OS.cases.status(s); } catch { return ['Provider assessment process', 'muted']; } }
+      case 'cancer': { const st = OS.cancer && OS.cancer.status(s); return st || ['Screening plan and warning signs', 'muted']; }
+      case 'learn': { const st = OS.learn && OS.learn.status(s); return st || ['Twelve units, molecules to body', 'muted']; }
       case 'academy': { const st = OS.academy && OS.academy.status(); return st || ['Lessons and practice cases', 'muted']; }
       case 'insights': { const st = OS.insights && OS.insights.status(s); return st || ['Patterns and experiments', 'muted']; }
       case 'cycle': { const st = OS.cycle && OS.cycle.status(s); return st || ['Periods, phases, menopause', 'muted']; }
@@ -104,7 +106,7 @@
   }
 
   function render(s, sc) {
-    const groups = CLUSTERS.map((c) => ({ ...c, items: c.items.filter((n) => OS.views[n]) })).filter((c) => c.items.length);
+    const groups = CLUSTERS.map((c) => ({ ...c, items: c.items.filter((n) => OS.views[n] && (!OS.canSee || OS.canSee(n))) })).filter((c) => c.items.length);
     const total = groups.reduce((a, c) => a + c.items.length, 0);
     const scored = PARTS.filter(([k]) => sc.parts[k] != null).length;
     const panel = (c) => `<section class="hub-c" data-k="${c.k}" aria-labelledby="hub-h-${c.k}">

@@ -6,17 +6,17 @@
   const GROUPS = [
     { k: 'intro', label: 'Intro', items: ['welcome'] },
     { k: 'today', label: 'Today', items: ['today'] },
-    { k: 'body', label: 'Body', items: ['body', 'atlas', 'heart', 'flow', 'bodycomp', 'biology', 'biochem', 'sleep', 'looks', 'recovery', 'wave', 'pt', 'surgery', 'imaging', 'ultrasound', 'mirror', 'function', 'longevity', 'wearables'] },
+    { k: 'body', label: 'Body', items: ['body', 'atlas', 'learn', 'heart', 'flow', 'bodycomp', 'biology', 'biochem', 'sleep', 'looks', 'recovery', 'wave', 'pt', 'surgery', 'imaging', 'ultrasound', 'mirror', 'function', 'longevity', 'wearables'] },
     { k: 'training', label: 'Training', items: ['training', 'motion', 'athlete', 'ar', 'machines', 'gym'] },
     { k: 'myo', label: 'Myo', items: ['myo', 'twin', 'insights', 'mode', 'score', 'stream', 'face', 'bci', 'chip', 'coach'] },
     { k: 'life', label: 'Life', items: ['fuel', 'kitchen', 'food', 'life', 'mind', 'cycle', 'pregnancy', 'env', 'logbook', 'enhance'] },
-    { k: 'more', label: 'More', items: ['emergency', 'care', 'cases', 'academy', 'connect', 'evidence', 'report', 'augment', 'system'] }
+    { k: 'more', label: 'More', items: ['emergency', 'care', 'cancer', 'cases', 'academy', 'connect', 'evidence', 'report', 'augment', 'system'] }
   ];
-  const DESC = { mode: 'Full-screen neuro and body dashboard with a full scan', score: 'Your five systems, trend and QR sharing', kitchen: 'Food search, recipes, week plan, supplements, partners', mind: 'Check-ins, self-checks, strategies and support', motion: 'XR vector analysis: jumps and movement screens', biochem: 'Metabolic pathways mapped to your labs', evidence: 'New studies and the review queue', myo: 'Every function around the living cell', coach: 'Ask Myo by voice or text', report: 'A printable summary for you or your clinician', profile: 'Account, sync and your data rights', today: "Today's protocol and scores", connect: 'MedTech devices, Bluetooth and the Ingest API', looks: 'Physique, skin, face and procedures build', sleep: '14-night study, sleep reports and recordings', recovery: 'Sonosphere sound, heat, cold, red light', pt: 'Rehab plans with pain monitoring', body: 'Real 3D anatomy, every system', biology: 'Biomarkers against optimal ranges', imaging: 'CT, MRI, X-ray, ultrasound and DEXA viewer', heart: 'Anatomy, one heartbeat, ECG rhythm, coronary views', stream: 'Camera pulse, heart sounds, breathing, Bluetooth strap', logbook: 'Every input on one timeline, plus symptoms', bodycomp: 'Smart scale, DEXA and your scale-to-DEXA offset', twin: 'A 3D model of you: systems, what-if plans, AI', surgery: 'Surgery companion and OR workflow board', atlas: 'Every system, how they connect, embryo to old age', flow: 'Circulation, Doppler monitor, perfusion, vascular scans', ultrasound: 'Live view, freeze and measure from any scanner', pregnancy: 'Dates, scans, growth chart and red flags', wave: 'StemWave and shockwave sessions by area', food: 'Grow, harvest, pantry, barcode scanner, additives and pesticides', chip: 'Implant concept: architecture, power, protocol, server, safety', emergency: 'Call, first-aid steps, CPR coach, seizure timer, medical ID', insights: 'Your week, what moves together, experiments on yourself', cycle: 'Periods, phases, symptoms and menopause', env: 'Air quality, UV, heat and the best time to train outside', care: 'Care team, appointments, visit prep, routines, one calendar', cases: 'For providers: assess a member step by step, with sources', academy: 'Internal training: lessons, practice cases, certificate', face: 'Silent commands, face scan, voice in noise', bci: 'EEG lab, decoders, implant design, neural API', mirror: 'Live x-ray of head and hands', function: 'Movement, cognition and mood tests', longevity: 'Biological age and healthspan plan', wearables: 'Oura and WHOOP sync', training: "Today's session and program", athlete: 'Build toward an athlete type', ar: 'Form coaching on camera', machines: 'APS, ISO Flow and connected gear', gym: 'Plan a facility', fuel: 'Meals, protein and water', life: 'Habits, schedule and goals', enhance: 'Supplements, graded by evidence', augment: 'Ascend tiers and devices', system: 'How Myo is built and MVP status', welcome: 'Introduction and setup' };
+  const DESC = { mode: 'Full-screen neuro and body dashboard with a full scan', score: 'Your five systems, trend and QR sharing', kitchen: 'Food search, recipes, week plan, supplements, partners', mind: 'Check-ins, self-checks, strategies and support', motion: 'XR vector analysis: jumps and movement screens', biochem: 'Metabolic pathways mapped to your labs', evidence: 'New studies and the review queue', myo: 'Every function around the living cell', coach: 'Ask Myo by voice or text', report: 'A printable summary for you or your clinician', profile: 'Account, sync and your data rights', today: "Today's protocol and scores", connect: 'MedTech devices, Bluetooth and the Ingest API', looks: 'Physique, skin, face and procedures build', sleep: '14-night study, sleep reports and recordings', recovery: 'Sonosphere sound, heat, cold, red light', pt: 'Rehab plans with pain monitoring', body: 'Real 3D anatomy, every system', biology: 'Biomarkers against optimal ranges', imaging: 'CT, MRI, X-ray, ultrasound and DEXA viewer', heart: 'Anatomy, one heartbeat, ECG rhythm, coronary views', stream: 'Camera pulse, heart sounds, breathing, Bluetooth strap', logbook: 'Every input on one timeline, plus symptoms', bodycomp: 'Smart scale, DEXA and your scale-to-DEXA offset', twin: 'A 3D model of you: systems, what-if plans, AI', surgery: 'Surgery companion and OR workflow board', atlas: 'Every system, how they connect, embryo to old age', flow: 'Circulation, Doppler monitor, perfusion, vascular scans', ultrasound: 'Live view, freeze and measure from any scanner', pregnancy: 'Dates, scans, growth chart and red flags', wave: 'StemWave and shockwave sessions by area', food: 'Grow, harvest, pantry, barcode scanner, additives and pesticides', chip: 'Implant concept: architecture, power, protocol, server, safety', emergency: 'Call, first-aid steps, CPR coach, seizure timer, medical ID', insights: 'Your week, what moves together, experiments on yourself', cycle: 'Periods, phases, symptoms and menopause', env: 'Air quality, UV, heat and the best time to train outside', care: 'Care team, appointments, visit prep, routines, one calendar', cases: 'For providers: assess a member step by step, with sources', academy: 'Internal training: lessons, practice cases, certificate', face: 'Silent commands, face scan, voice in noise', bci: 'EEG lab, decoders, implant design, neural API', mirror: 'Live x-ray of head and hands', function: 'Movement, cognition and mood tests', longevity: 'Biological age and healthspan plan', wearables: 'Oura and WHOOP sync', training: "Today's session and program", athlete: 'Build toward an athlete type', ar: 'Form coaching on camera', machines: 'APS, ISO Flow and connected gear', gym: 'Plan a facility', fuel: 'Meals, protein and water', life: 'Habits, schedule and goals', enhance: 'Supplements, graded by evidence', augment: 'Ascend tiers and devices', system: 'How Myo is built and MVP status', welcome: 'Introduction and setup', learn: 'Twelve biology units with quizzes and spaced review', cancer: 'Screening plan, warning signs, results; no diagnosis' };
   OS.navDesc = DESC;
   const TABS = ['today', 'myo', 'body', 'training'];
   const chev = '<svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>';
-  const groups = () => GROUPS.map((g) => ({ ...g, items: g.items.filter((n) => OS.views[n]) })).filter((g) => g.items.length);
+  const groups = () => GROUPS.map((g) => ({ ...g, items: g.items.filter((n) => OS.views[n] && (!OS.canSee || OS.canSee(n))) })).filter((g) => g.items.length);
   OS.navGroups = groups;
   OS.caps = { sample: null, downloads: null, tts: null, dictation: null };
   // state: device copy first so the first frame is real, then the account copy when it answers
@@ -24,12 +24,19 @@
   OS.state = local && local.v === 4 ? local : OS.seed();
 
   function closeMenus(except) { document.querySelectorAll('.tn-i[aria-expanded="true"]').forEach((b) => { if (b !== except) { b.setAttribute('aria-expanded', 'false'); const m = document.getElementById(b.getAttribute('aria-controls')); if (m) m.hidden = true; } }); }
-  function buildNav() {
+  // the menus follow your role (js/roles.js): staff pages appear when the role allows them
+  function paintNav() {
     const top = document.getElementById('topnav'), tab = document.getElementById('tabbar');
+    closeMenus();
     top.innerHTML = groups().map((g) => g.items.length === 1
       ? `<a class="tn-i" href="#${g.items[0]}" data-group="${g.k}" data-route="${g.items[0]}">${g.label}</a>`
       : `<button type="button" class="tn-i" data-group="${g.k}" aria-expanded="false" aria-controls="tn-${g.k}">${g.label}${chev}</button><div class="tn-menu" id="tn-${g.k}" hidden>${g.items.map((n) => `<a href="#${n}" data-route="${n}"><span>${icon(OS.views[n].icon, 18)}</span><b>${esc(OS.views[n].title)}</b><small>${esc(DESC[n] || '')}</small></a>`).join('')}</div>`).join('');
     tab.innerHTML = TABS.filter((n) => OS.views[n]).map((n) => `<a href="#${n}" data-route="${n}">${icon(OS.views[n].icon, 20)}<span>${esc(OS.views[n].title)}</span></a>`).join('') + `<button type="button" data-act="nav-sheet" aria-haspopup="dialog">${icon('system', 20)}<span>Menu</span></button>`;
+    if (OS.current) markRoute(OS.current);
+  }
+  function buildNav() {
+    const top = document.getElementById('topnav');
+    paintNav();
     top.addEventListener('click', (e) => {
       const b = e.target.closest('button.tn-i'); if (b) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b); b.setAttribute('aria-expanded', String(open)); document.getElementById(b.getAttribute('aria-controls')).hidden = !open; return; }
       if (e.target.closest('a')) closeMenus();
@@ -56,14 +63,15 @@
     document.getElementById('save-state').textContent = mode === 'cloud' ? 'Synced to your Myo account' : mode === 'account' ? 'Synced to your account' : mode === 'device' ? 'Saved on this device' : 'Not saved';
   }
   OS.on('header', header);
+  OS.on('nav', paintNav);
   OS.on('saved', header);
-  OS.on('route', (name) => {
+  function markRoute(name) {
     document.querySelectorAll('#topnav [data-route], #tabbar [data-route]').forEach((a) => a.setAttribute('aria-current', a.dataset.route === name ? 'page' : 'false'));
     const g = groups().find((x) => x.items.includes(name));
     document.querySelectorAll('#topnav .tn-i[data-group]').forEach((b) => b.classList.toggle('on', !!g && b.dataset.group === g.k));
     const mb = document.querySelector('#tabbar [data-act="nav-sheet"]'); if (mb) mb.setAttribute('aria-current', TABS.includes(name) ? 'false' : 'page');
-    closeMenus();
-  });
+  }
+  OS.on('route', (name) => { markRoute(name); closeMenus(); });
 
   // event delegation: data-act (click), data-change (change), data-submit (forms)
   document.addEventListener('click', (e) => {

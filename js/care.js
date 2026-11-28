@@ -29,6 +29,7 @@
     (F.plantings || []).forEach((p) => { const c = OS.food && OS.food.CROPS.find((x) => x[0] === p.crop); if (c && c[4]) add(dayKey(addDays(new Date(`${p.d}T12:00:00`), p.crop === 'garlic' ? 260 : c[4])), `${c[1]} ready to harvest`, 'Garden', 'food'); });
     (F.pantry || []).forEach((x) => { if (x.useBy) add(x.useBy, `Use by: ${x.name}`, 'Pantry', 'food'); });
     ((s.insights && s.insights.exps) || []).forEach((e) => add(dayKey(addDays(new Date(`${e.start}T12:00:00`), e.base + e.len - 1)), `Experiment ends: ${e.name}`, 'Experiment', 'insights'));
+    if (OS.cancer) { try { OS.cancer.calendar(s).forEach((x) => add(x.d, x.title, 'Screening', 'cancer')); } catch { /* the plan never blocks the calendar */ } }
     if (s.sleep && s.sleep.study && s.sleep.study.start) add(dayKey(addDays(new Date(`${s.sleep.study.start}T12:00:00`), 13)), 'Sleep study ends', 'Sleep', 'sleep');
     (K(s).routines || []).forEach((r) => { for (let i = 0; i < 7; i++) { const d = addDays(new Date(), i), code = DOW[(d.getDay() + 6) % 7][0]; if (!r.days || !r.days.length || r.days.includes(code)) { add(dayKey(d), r.title, 'Routine', 'care', { time: r.time, routine: true }); } } });
     return out.sort((a, b) => (a.d + (a.time || '99')).localeCompare(b.d + (b.time || '99')));
@@ -112,6 +113,11 @@
     (sc.flagged || []).filter((x) => x.m && x.e && (x.e.status === 'bad' || x.e.status === 'warn') && OS.hasValue(x.m)).sort((x, y) => (x.e.status === 'bad' ? 0 : 1) - (y.e.status === 'bad' ? 0 : 1)).slice(0, 6).forEach(({ m, e }) => out.push(['Labs', `${m.name}: ${m.value}${m.unit ? ` ${m.unit}` : ''}`, e.status === 'bad' ? 'Outside its reference range' : 'In range, not yet optimal']));
     const sym = {}; (s.symptoms || []).filter((r) => r.at.slice(0, 10) >= since).forEach((r) => { (sym[r.sym] = sym[r.sym] || []).push(r.sev); });
     Object.entries(sym).sort((a, b) => b[1].length - a[1].length).slice(0, 5).forEach(([k, v]) => out.push(['Symptoms', `${k}: ${v.length} time${v.length > 1 ? 's' : ''} in 30 days`, `worst ${Math.max(...v)}/10`]));
+    if (OS.cancer && s.cancer) {
+      const since60 = dayKey(addDays(new Date(), -60));
+      (s.cancer.signs || []).filter((x) => x.d >= since60).forEach((x) => out.push(['Warning sign', (OS.cancer.SIGNS.find((y) => y[0] === x.k) || [, x.k])[1], `noted ${fmtDate(x.d)}: say how long it has lasted`]));
+      try { OS.cancer.plan(s).filter((p) => p.st === 'due' || p.st === 'follow').forEach((p) => out.push(['Screening', `${p.name} cancer screening: ${p.st === 'due' ? 'due' : 'follow-up open'}`, p.tests || ''])); } catch { /* skip */ }
+    }
     const sz = ((s.emergency && s.emergency.log) || []).filter((r) => r.kind === 'seizure' && r.at.slice(0, 10) >= since); if (sz.length) out.push(['Events', `${sz.length} seizure${sz.length > 1 ? 's' : ''} in 30 days`, 'Times and notes are in the Log book']);
     if (OS.cycle && s.cycle) { const M = OS.cycle.model(s.cycle); if (M.known >= 2) out.push(['Cycle', `Cycles average ${Math.round(M.avg)} days (±${Math.round(M.sdv)}), periods ${Math.round(M.pavg)} days`, M.phase === 'late' ? 'Period currently late' : '']); }
     if (OS.pregnancy && s.pregnancy) { const w = OS.pregnancy.status(s); if (w) out.push(['Pregnancy', `${w} pregnant`, '']); }
